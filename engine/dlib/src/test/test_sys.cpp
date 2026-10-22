@@ -447,6 +447,35 @@ TEST(dmSys, ResourceFunctionsAcceptAnsiCodePagePaths)
 
 #endif
 
+#if defined(DM_PLATFORM_TVOS)
+// Verifies that data written for a save-file path reads back the same, also through the absolute path of the same
+// file, and that a path with no data reports RESULT_NOENT (tvOS keeps sys.save data in the user defaults).
+TEST(dmSys, PersistentData)
+{
+    char save_path[1024];
+    ASSERT_EQ(dmSys::RESULT_OK, dmSys::GetApplicationSavePath("testing", save_path, sizeof(save_path)));
+    char file_path[1024];
+    dmSnPrintf(file_path, sizeof(file_path), "%s/persistent_data", save_path);
+
+    const char data[] = "persistent";
+    ASSERT_EQ(dmSys::RESULT_OK, dmSys::WritePersistentData(file_path, data, sizeof(data)));
+
+    uint32_t size = 0;
+    ASSERT_EQ(dmSys::RESULT_OK, dmSys::GetPersistentDataSize(file_path, &size));
+    ASSERT_EQ((uint32_t)sizeof(data), size);
+
+    char read[sizeof(data)];
+    ASSERT_EQ(dmSys::RESULT_INVAL, dmSys::ReadPersistentData(file_path, read, size - 1));
+    ASSERT_EQ(dmSys::RESULT_OK, dmSys::ReadPersistentData(file_path, read, size));
+    ASSERT_STREQ(data, read);
+
+    // The data is keyed by the path relative to the save directory
+    ASSERT_EQ(dmSys::RESULT_OK, dmSys::GetPersistentDataSize("testing/persistent_data", &size));
+
+    ASSERT_EQ(dmSys::RESULT_NOENT, dmSys::GetPersistentDataSize("testing/no_persistent_data", &size));
+}
+#endif
+
 TEST(dmSys, GetResourcesPath)
 {
     char path[DMPATH_MAX_PATH];

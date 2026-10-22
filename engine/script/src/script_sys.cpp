@@ -170,6 +170,9 @@ union SaveLoadBuffer
      * the limit on the total number of rows remains in effect.
      * This function will raise a Lua error if an error occurs while saving the table.
      *
+     * @note tvOS has no persistent file storage, so on tvOS the table is stored in the user defaults (NSUserDefaults),
+     * under the path relative to the save directory, and no file is written. The user defaults are limited in size.
+     *
      * @name sys.save
      * @param filename [type:string] file to write to
      * @param table [type:table<any, any>] lua table to save
@@ -217,7 +220,17 @@ union SaveLoadBuffer
         }
         uint32_t n_used = CheckTable(L, buffer, table_size, 2);
 
-#if !defined(__EMSCRIPTEN__)
+#if defined(DM_PLATFORM_TVOS)
+        // tvOS has no persistent file storage, the table is kept in the user defaults
+        dmSys::Result r = dmSys::WritePersistentData(filename, buffer, n_used);
+        Sys_FreeTableSerializationBuffer(buffer);
+        if (r != dmSys::RESULT_OK)
+        {
+            return luaL_error(L, "Could not write to the file %s.", filename);
+        }
+        lua_pushboolean(L, 1);
+        return 1;
+#elif !defined(__EMSCRIPTEN__)
         FILE* file = fopen(tmp_filename, "wb");
         if (!file)
         {
@@ -304,6 +317,27 @@ union SaveLoadBuffer
     static int Sys_Load(lua_State* L)
     {
         const char* filename = luaL_checkstring(L, 1);
+
+#if defined(DM_PLATFORM_TVOS)
+        uint32_t data_size = 0;
+        if (dmSys::GetPersistentDataSize(filename, &data_size) == dmSys::RESULT_OK)
+        {
+            char* buffer = Sys_SetupTableSerializationBuffer(data_size);
+            if (!buffer)
+            {
+                return luaL_error(L, "Could not allocate %d bytes for table deserialization.", data_size);
+            }
+            if (dmSys::ReadPersistentData(filename, buffer, data_size) != dmSys::RESULT_OK)
+            {
+                Sys_FreeTableSerializationBuffer(buffer);
+                return luaL_error(L, "Could not read from the file %s.", filename);
+            }
+            PushTable(L, buffer, data_size);
+            Sys_FreeTableSerializationBuffer(buffer);
+            return 1;
+        }
+#endif
+
         FILE* file = fopen(filename, "rb");
         if (file == 0x0)
         {
@@ -355,6 +389,10 @@ union SaveLoadBuffer
     {
         const char* path = luaL_checkstring(L, 1);
         bool result = dmSys::Exists(path);
+#if defined(DM_PLATFORM_TVOS)
+        uint32_t data_size = 0;
+        result = result || dmSys::GetPersistentDataSize(path, &data_size) == dmSys::RESULT_OK;
+#endif
         lua_pushboolean(L, result);
         return 1;
     }
@@ -397,6 +435,8 @@ union SaveLoadBuffer
      * This function will raise a Lua error if unable to get the save file path.
      *
      * @note Setting the environment variable `DM_SAVE_HOME` overrides the default application support path.
+     *
+     * @note On tvOS the path is in the caches directory, which the system may purge. Tables saved with `sys.save` are kept in the user defaults instead and persist.
      *
      * @name sys.get_save_file
      * @param application_id [type:string] user defined id of the application, which helps define the location of the save-file

@@ -15,6 +15,8 @@
 package com.dynamo.bob.bundle.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import org.junit.Test;
@@ -70,5 +72,18 @@ public class IOSBundlerTest {
         assertEquals("TEAMID.com.example.game", IOSBundler.resolveApplicationIdentifier("TEAMID.*", "com.example.game"));
         assertEquals("TEAMID.com.example.game", IOSBundler.resolveApplicationIdentifier("TEAMID.com.example.*", "com.example.game"));
         assertEquals("TEAMID.com.example.game", IOSBundler.resolveApplicationIdentifier("TEAMID.com.example.game", "com.example.other"));
+    }
+
+    // tvOS bundles share the validation, and the errors name the tvos section of game.project.
+    @Test
+    public void namesTvOSSectionInErrors() throws IOException {
+        IOSBundler.validateSceneManifest(scene("<key>UISceneDelegateClassName</key><string>DefoldSceneDelegate</string>"), "tvos");
+        try {
+            IOSBundler.validateSceneManifest(plist("<key>CFBundleName</key><string>Game</string>"), "tvos");
+            fail("Expected an IOException");
+        } catch (IOException e) {
+            assertTrue(e.getMessage(), e.getMessage().startsWith("tvos.infoplist"));
+            assertTrue(e.getMessage(), e.getMessage().contains("/builtins/manifests/tvos/Info.plist"));
+        }
     }
 }

@@ -130,7 +130,8 @@ public class BundleHelper {
         String title = this.projectProperties.getStringValue("project", "title", "Unnamed");
 
         String appDirSuffix = "";
-        if (platform == Platform.X86_64MacOS || platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim) {
+        if (platform == Platform.X86_64MacOS || platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim ||
+            platform == Platform.Arm64TvOS || platform == Platform.Arm64TvOSSim) {
             appDirSuffix = ".app";
         }
 
@@ -739,7 +740,7 @@ public class BundleHelper {
         String[] lines = log.split("\\r?\\n");
 
         List<ResourceInfo> allIssues = new ArrayList<ResourceInfo>();
-        if (platform.contains("osx") || platform.contains("ios") || platform.contains("web")) {
+        if (platform.contains("osx") || platform.contains("ios") || platform.contains("tvos") || platform.contains("web")) {
             parseLogClang(lines, allIssues);
         } else if (platform.contains("android")) {
             parseJarConflicts(lines, allIssues);

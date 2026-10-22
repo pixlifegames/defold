@@ -611,7 +611,8 @@ public class ExtenderUtil {
                     Object context = ((Map<?, ?>) platformValue).get("context");
                     modified |= addBullet3DCompatibilityExclusions(context);
                     if (List.of("android", "armv7-android", "arm64-android", "x86_64-android",
-                            "ios", "arm64-ios", "arm64_sim-ios", "web", "wasm-web", "wasm_pthread-web").contains(platform.getKey())) {
+                            "ios", "arm64-ios", "arm64_sim-ios", "tvos", "arm64-tvos", "arm64_sim-tvos",
+                            "web", "wasm-web", "wasm_pthread-web").contains(platform.getKey())) {
                         modified |= migrateLibraryNames(context, AppManifestMigration.NATIVE_PLATFORM_LIBRARY_NAMES);
                     }
                     if ("arm64_sim-ios".equals(platform.getKey())) {
@@ -856,9 +857,15 @@ public class ExtenderUtil {
             }
         }
 
-        // For iOS and macOS only: Add the project privacy manifest 
+        // For iOS, tvOS and macOS only: Add the project privacy manifest 
         if (platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim) {
             IResource resource = getProjectResource(project, "ios", "privacymanifest");
+            if (resource != null) {
+                sources.add(new FSAliasResource(resource, project.getRootDirectory(), privacyManifestPath));
+            }
+        }
+        else if (platform == Platform.Arm64TvOS || platform == Platform.Arm64TvOSSim) {
+            IResource resource = getProjectResource(project, "tvos", "privacymanifest");
             if (resource != null) {
                 sources.add(new FSAliasResource(resource, project.getRootDirectory(), privacyManifestPath));
             }

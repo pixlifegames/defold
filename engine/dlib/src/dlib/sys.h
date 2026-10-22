@@ -211,6 +211,7 @@ namespace dmSys
      * Windows: C:\Documents and Settings\USERNAME\Application Data\APPLICATION_NAME
      * Linux: ~/.APPLICATION_NAME
      * Switch: cache://
+     * tvOS: ~/Library/Caches/APPLICATION_NAME (the system may purge it)
      * @param application_name application name to get path for. This is the name of "your" application.
      * @param path path buffer
      * @param path_len path buffer length
@@ -234,6 +235,36 @@ namespace dmSys
      * codes, e.g. RESULT_ACCES if permission is denied.
      */
     Result GetApplicationSavePath(const char* application_name, char* path, uint32_t path_len);
+
+#if defined(DM_PLATFORM_TVOS)
+    /**
+     * tvOS has no persistent file storage for applications, so data that has to persist (sys.save)
+     * is kept in the user defaults instead. It is stored under the path relative to the save directory,
+     * since the absolute path changes when the application is updated.
+     * @param path path the data is stored for
+     * @param size [out] size of the stored data
+     * @return RESULT_OK if there is data for the path, RESULT_NOENT if not
+     */
+    Result GetPersistentDataSize(const char* path, uint32_t* size);
+
+    /**
+     * Read data stored by WritePersistentData()
+     * @param path path the data is stored for
+     * @param buffer buffer to read to
+     * @param buffer_size buffer size, at least the size returned by GetPersistentDataSize()
+     * @return RESULT_OK on success, RESULT_NOENT if there is no data for the path, RESULT_INVAL if the buffer is too small
+     */
+    Result ReadPersistentData(const char* path, void* buffer, uint32_t buffer_size);
+
+    /**
+     * Store data for a path in the user defaults
+     * @param path path to store the data for
+     * @param data data to store
+     * @param size data size
+     * @return RESULT_OK on success
+     */
+    Result WritePersistentData(const char* path, const void* data, uint32_t size);
+#endif
 
     /**
      * Get resource directory path. On iOS the bundle directory is returned whereas on MacOSX

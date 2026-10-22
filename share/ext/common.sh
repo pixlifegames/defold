@@ -5,12 +5,15 @@ set -e
 _SOURCE="${BASH_SOURCE[0]:-$0}"
 SCRIPTDIR="$( cd "$( dirname "${_SOURCE}" )" >/dev/null 2>&1 && pwd )"
 
-eval $(python $SCRIPTDIR/../../build_tools/set_sdk_vars.py VERSION_IPHONEOS VERSION_IPHONESIMULATOR VERSION_IPHONEOS_MIN VERSION_MACOSX_MIN VERSION_MACOSX VERSION_XCODE PACKAGES_EMSCRIPTEN_SDK)
+eval $(python $SCRIPTDIR/../../build_tools/set_sdk_vars.py VERSION_IPHONEOS VERSION_IPHONESIMULATOR VERSION_IPHONEOS_MIN VERSION_APPLETVOS VERSION_APPLETVSIMULATOR VERSION_TVOS_MIN VERSION_MACOSX_MIN VERSION_MACOSX VERSION_XCODE PACKAGES_EMSCRIPTEN_SDK)
 
 # config
 IOS_SDK_VERSION=$VERSION_IPHONEOS
 IOS_SIMULATOR_SDK_VERSION=$VERSION_IPHONESIMULATOR
 IOS_MIN_SDK_VERSION=$VERSION_IPHONEOS_MIN
+TVOS_SDK_VERSION=$VERSION_APPLETVOS
+TVOS_SIMULATOR_SDK_VERSION=$VERSION_APPLETVSIMULATOR
+TVOS_MIN_SDK_VERSION=$VERSION_TVOS_MIN
 
 OSX_MIN_SDK_VERSION=$VERSION_MACOSX_MIN
 OSX_SDK_VERSION=$VERSION_MACOSX
@@ -19,6 +22,8 @@ XCODE_VERSION=$VERSION_XCODE
 OSX_SDK_ROOT=${DYNAMO_HOME}/ext/SDKs/MacOSX${OSX_SDK_VERSION}.sdk
 IOS_SDK_ROOT=${DYNAMO_HOME}/ext/SDKs/iPhoneOS${IOS_SDK_VERSION}.sdk
 IOS_SIMULATOR_SDK_ROOT=${DYNAMO_HOME}/ext/SDKs/iPhoneSimulator${IOS_SDK_VERSION}.sdk
+TVOS_SDK_ROOT=${DYNAMO_HOME}/ext/SDKs/AppleTVOS${TVOS_SDK_VERSION}.sdk
+TVOS_SIMULATOR_SDK_ROOT=${DYNAMO_HOME}/ext/SDKs/AppleTVSimulator${TVOS_SIMULATOR_SDK_VERSION}.sdk
 DARWIN_TOOLCHAIN_ROOT=${DYNAMO_HOME}/ext/SDKs/XcodeDefault${XCODE_VERSION}.xctoolchain
 
 EMSCRIPTEN_SDK_ROOT=${DYNAMO_HOME}/ext/SDKs/${PACKAGES_EMSCRIPTEN_SDK}
@@ -66,6 +71,12 @@ if [ "Darwin" == "$(uname)" ]; then
     fi
     if [ ! -d "${IOS_SIMULATOR_SDK_ROOT}" ]; then
         IOS_SIMULATOR_SDK_ROOT=$(xcrun -f --sdk iphonesimulator --show-sdk-path)
+    fi
+    if [ ! -d "${TVOS_SDK_ROOT}" ]; then
+        TVOS_SDK_ROOT=$(xcrun -f --sdk appletvos --show-sdk-path)
+    fi
+    if [ ! -d "${TVOS_SIMULATOR_SDK_ROOT}" ]; then
+        TVOS_SIMULATOR_SDK_ROOT=$(xcrun -f --sdk appletvsimulator --show-sdk-path)
     fi
 fi
 
@@ -250,6 +261,30 @@ function cmi_setup_cc() {
             export RANLIB=$DARWIN_TOOLCHAIN_ROOT/usr/bin/ranlib
             ;;
 
+        arm64-tvos|arm64_sim-tvos)
+            if [ "$1" == "arm64-tvos" ]; then
+                local sdk_root=${TVOS_SDK_ROOT}
+                local version_min="-mtvos-version-min=${TVOS_MIN_SDK_VERSION}"
+            else
+                local sdk_root=${TVOS_SIMULATOR_SDK_ROOT}
+                # NOTE: -mtvos-simulator-version-min makes clang/ld tag the objects with the
+                # TVOSSIMULATOR platform
+                local version_min="-mtvos-simulator-version-min=${TVOS_MIN_SDK_VERSION}"
+            fi
+            [ ! -e "${sdk_root}" ] && echo "No SDK found at ${sdk_root}" && exit 1
+            export PATH=$DARWIN_TOOLCHAIN_ROOT/usr/bin:$PATH
+            unset MACOSX_DEPLOYMENT_TARGET
+            export CPPFLAGS="-arch arm64 -isysroot ${sdk_root}"
+            export CXXFLAGS="${CXXFLAGS} ${version_min} -stdlib=libc++ -arch arm64 -isysroot ${sdk_root}"
+            export CFLAGS="${CPPFLAGS} ${version_min} "
+            export LDFLAGS="-arch arm64 ${version_min} -isysroot ${sdk_root}"
+            export CPP="$DARWIN_TOOLCHAIN_ROOT/usr/bin/clang -E"
+            export CC=$DARWIN_TOOLCHAIN_ROOT/usr/bin/clang
+            export CXX=$DARWIN_TOOLCHAIN_ROOT/usr/bin/clang++
+            export AR=$DARWIN_TOOLCHAIN_ROOT/usr/bin/ar
+            export RANLIB=$DARWIN_TOOLCHAIN_ROOT/usr/bin/ranlib
+            ;;
+
          armv7-android)
             local platform=`uname | awk '{print tolower($0)}'`
             local llvm="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/${platform}-x86_64/bin"
@@ -420,7 +455,7 @@ function cmi() {
             cmi_cross $1 arm-linux
             ;;
 
-        arm64-ios|arm64_sim-ios|armv7-android|arm64-android|wasm-web|wasm_pthread-web)
+        arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos|armv7-android|arm64-android|wasm-web|wasm_pthread-web)
             cmi_cross $1 arm-ios
             ;;
 

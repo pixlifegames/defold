@@ -78,6 +78,7 @@ namespace dmPlatform
     void GetReservedAreas(HWindow window, dmArray<WindowReservedArea>& areas)
     {
         areas.SetSize(0);
+#if !TARGET_OS_TV // reserved regions are an iOS API
         if (@available(iOS 27.1, *))
         {
             UIView* view = (UIView*)dmNativeGetiOSUIView();
@@ -104,6 +105,7 @@ namespace dmPlatform
                     areas.Push(area);
             }
         }
+#endif
     }
 
 }

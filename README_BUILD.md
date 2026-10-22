@@ -77,6 +77,8 @@ The following platforms are supported:
 * `x86_64-win32`
 * `arm64-ios`
 * `arm64_sim-ios`
+* `arm64-tvos`
+* `arm64_sim-tvos`
 * `armv7-android`
 * `arm64-android`
 * `wasm-web`

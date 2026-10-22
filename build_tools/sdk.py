@@ -41,11 +41,15 @@ VERSION_XCODE_CLANG="21.0.0"
 VERSION_MACOSX="27.0"
 VERSION_IPHONEOS="27.1"
 VERSION_IPHONESIMULATOR="27.1"
+VERSION_APPLETVOS="27.0"
+VERSION_APPLETVSIMULATOR="27.0"
 MACOS_ASAN_PATH="usr/lib/clang/%s/lib/darwin/libclang_rt.asan_osx_dynamic.dylib"
 
 # NOTE: Minimum iOS-version is also specified in Info.plist-files
 # (MinimumOSVersion and perhaps DTPlatformVersion)
 VERSION_IPHONEOS_MIN="15.0"
+# NOTE: Minimum tvOS-version is also specified in Info.plist-files (MinimumOSVersion)
+VERSION_TVOS_MIN="15.0"
 # Xcode 27.1 Deployment Targets changed https://developer.apple.com/xcode/system-requirements
 VERSION_MACOSX_MIN="12.0"
 
@@ -87,6 +91,8 @@ PACKAGES_EMSCRIPTEN_SDK = f"emsdk-{EMSCRIPTEN_VERSION_STR}"
 
 PACKAGES_IOS_SDK="iPhoneOS%s.sdk" % VERSION_IPHONEOS
 PACKAGES_IOS_SIMULATOR_SDK="iPhoneSimulator%s.sdk" % VERSION_IPHONESIMULATOR
+PACKAGES_TVOS_SDK="AppleTVOS%s.sdk" % VERSION_APPLETVOS
+PACKAGES_TVOS_SIMULATOR_SDK="AppleTVSimulator%s.sdk" % VERSION_APPLETVSIMULATOR
 PACKAGES_MACOS_SDK="MacOSX%s.sdk" % VERSION_MACOSX
 PACKAGES_XCODE_TOOLCHAIN="XcodeDefault%s.xctoolchain" % VERSION_XCODE
 
@@ -102,6 +108,10 @@ defold_info['arm64-ios']['version'] = VERSION_IPHONEOS
 defold_info['arm64-ios']['pattern'] = PACKAGES_IOS_SDK
 defold_info['arm64_sim-ios']['version'] = VERSION_IPHONESIMULATOR
 defold_info['arm64_sim-ios']['pattern'] = PACKAGES_IOS_SIMULATOR_SDK
+defold_info['arm64-tvos']['version'] = VERSION_APPLETVOS
+defold_info['arm64-tvos']['pattern'] = PACKAGES_TVOS_SDK
+defold_info['arm64_sim-tvos']['version'] = VERSION_APPLETVSIMULATOR
+defold_info['arm64_sim-tvos']['pattern'] = PACKAGES_TVOS_SIMULATOR_SDK
 defold_info['x86_64-macos']['version'] = VERSION_MACOSX
 defold_info['x86_64-macos']['pattern'] = PACKAGES_MACOS_SDK
 defold_info['arm64-macos']['version'] = VERSION_MACOSX
@@ -174,6 +184,10 @@ def _convert_darwin_platform(platform):
         return 'iphoneos'
     if platform in ('arm64_sim-ios',):
         return 'iphonesimulator'
+    if platform in ('arm64-tvos',):
+        return 'appletvos'
+    if platform in ('arm64_sim-tvos',):
+        return 'appletvsimulator'
     return 'unknown'
 
 def _get_xcode_local_path():
@@ -953,7 +967,7 @@ def check_defold_sdk(sdkfolder, host_platform, platform, verbose=False):
     if sdk_vendor is not None and sdk_vendor.supports_platform(platform):
         folders = sdk_vendor.get_defold_sdk_folders(platform)
 
-    elif platform in ('x86_64-macos', 'arm64-macos', 'arm64-ios', 'arm64_sim-ios'):
+    elif platform in ('x86_64-macos', 'arm64-macos', 'arm64-ios', 'arm64_sim-ios', 'arm64-tvos', 'arm64_sim-tvos'):
         folders.append(_get_defold_path(sdkfolder, 'xcode'))
         folders.append(_get_defold_path(sdkfolder, platform))
 
@@ -996,7 +1010,7 @@ def check_defold_sdk(sdkfolder, host_platform, platform, verbose=False):
 def check_local_sdk(platform, verbose=False):
     log_verbose(verbose, f"check_local_sdk: {platform}")
 
-    if platform in ('x86_64-macos', 'arm64-macos', 'arm64-ios', 'arm64_sim-ios'):
+    if platform in ('x86_64-macos', 'arm64-macos', 'arm64-ios', 'arm64_sim-ios', 'arm64-tvos', 'arm64_sim-tvos'):
         xcode_version = get_local_darwin_toolchain_version()
         if not xcode_version:
             raise SDKException(f"Failed to find XCode version")
@@ -1020,7 +1034,7 @@ def _get_defold_sdk_info(sdkfolder, host_platform, platform):
     if sdk_vendor is not None and sdk_vendor.supports_platform(platform):
         return sdk_vendor.get_sdk_info(platform)
 
-    elif platform in ('x86_64-macos', 'arm64-macos','arm64-ios','arm64_sim-ios'):
+    elif platform in ('x86_64-macos', 'arm64-macos','arm64-ios','arm64_sim-ios','arm64-tvos','arm64_sim-tvos'):
         info['xcode'] = {}
         info['xcode']['version'] = VERSION_XCODE
         info['xcode']['path'] = _get_defold_path(sdkfolder, 'xcode')
@@ -1064,7 +1078,7 @@ def _get_defold_sdk_info(sdkfolder, host_platform, platform):
 
 def _get_local_sdk_info(platform, verbose=False):
     info = {}
-    if platform in ('x86_64-macos', 'arm64-macos','arm64-ios','arm64_sim-ios'):
+    if platform in ('x86_64-macos', 'arm64-macos','arm64-ios','arm64_sim-ios','arm64-tvos','arm64_sim-tvos'):
         info['xcode'] = {}
         info['xcode']['version'] = get_local_darwin_toolchain_version()
         info['xcode']['path'] = get_local_darwin_toolchain_path()
@@ -1249,7 +1263,7 @@ def _test_version_clang(platform, info, can_run, verbose):
 
     if platform in ['arm64-linux', 'x86_64-linux']:
         required_version = VERSION_LINUX_CLANG
-    elif platform in ['arm64-macos', 'x86_64-macos', 'arm64-ios', 'arm64_sim-ios']:
+    elif platform in ['arm64-macos', 'x86_64-macos', 'arm64-ios', 'arm64_sim-ios', 'arm64-tvos', 'arm64_sim-tvos']:
         required_version = VERSION_XCODE_CLANG
 
     if required_version is None:
@@ -1271,7 +1285,7 @@ def _compile_file_clang(platform, info, srcfile, exefile, verbose):
     # if we can rely on the PATH variable
     use_local_path = False
     clang = 'clang++'
-    if platform in ['arm64-linux', 'x86_64-linux', 'arm64-macos', 'x86_64-macos', 'arm64-ios', 'arm64_sim-ios']:
+    if platform in ['arm64-linux', 'x86_64-linux', 'arm64-macos', 'x86_64-macos', 'arm64-ios', 'arm64_sim-ios', 'arm64-tvos', 'arm64_sim-tvos']:
         use_local_path = True
         clang = _get_clang_from_info(info)
         if verbose:
@@ -1282,7 +1296,7 @@ def _compile_file_clang(platform, info, srcfile, exefile, verbose):
         clang = os.path.join(info['bintools'], info['clangname'])
         cmd = [clang]
 
-    elif platform in ['arm64-ios', 'arm64_sim-ios']:
+    elif platform in ['arm64-ios', 'arm64_sim-ios', 'arm64-tvos', 'arm64_sim-tvos']:
         # Both the device and the simulator are arm64, the platform prefix is not the cpu arch
         cmd.extend(['-isysroot', info[platform]['path'], '-arch', 'arm64'])
 
@@ -1324,7 +1338,7 @@ def test_sdk(platform, info, verbose=False):
 
     if platform in ['arm64-linux', 'x86_64-linux',
                     'arm64-macos', 'x86_64-macos',
-                    'arm64-ios', 'arm64_sim-ios',
+                    'arm64-ios', 'arm64_sim-ios', 'arm64-tvos', 'arm64_sim-tvos',
                     'arm64-android', 'armv7-android', 'x86_64-android']:
         use_clang = True
 
@@ -1340,7 +1354,7 @@ def test_sdk(platform, info, verbose=False):
     return True
 
 def get_toolchain_root(sdkinfo, platform):
-    if platform in ('x86_64-macos','arm64-macos','arm64-ios','arm64_sim-ios'):
+    if platform in ('x86_64-macos','arm64-macos','arm64-ios','arm64_sim-ios','arm64-tvos','arm64_sim-tvos'):
         return sdkinfo['xcode']['path']
     if platform in ('x86_64-linux','arm64-linux'):
         return sdkinfo[platform]['path']
@@ -1351,7 +1365,7 @@ def get_strip_executable(platform, sdkinfo):
     if platform in ('armv7-android', 'arm64-android', 'x86_64-android'):
         return os.path.join(sdkinfo['bintools'], 'llvm-strip')
 
-    if platform in ('x86_64-macos', 'arm64-macos', 'arm64-ios', 'arm64_sim-ios'):
+    if platform in ('x86_64-macos', 'arm64-macos', 'arm64-ios', 'arm64_sim-ios', 'arm64-tvos', 'arm64_sim-tvos'):
         return os.path.join(get_toolchain_root(sdkinfo, platform), 'usr', 'bin', 'strip')
 
     return 'strip'

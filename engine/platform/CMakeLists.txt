@@ -72,7 +72,7 @@ else()
         set(_platform_sources
             "${PLAT_SRC_DIR}/window.cpp"
             "${PLAT_SRC_DIR}/platform_window_native.cpp")
-        if (TARGET_PLATFORM MATCHES "arm64-ios|arm64_sim-ios")
+        if (TARGET_PLATFORM MATCHES "arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos")
             list(APPEND _platform_sources "${PLAT_SRC_DIR}/platform_window_ios.mm" "${PLAT_SRC_DIR}/platform_app_ios.mm")
         elseif (TARGET_PLATFORM MATCHES "armv7-android|arm64-android|x86_64-android")
             list(APPEND _platform_sources "${PLAT_SRC_DIR}/platform_window_android.cpp" "${PLAT_SRC_DIR}/platform_app_android.cpp")
@@ -83,13 +83,18 @@ endif()
 # The mobile and web backends are engine sources, built with the platform library.
 set(PLATFORM_NATIVE_DIR "${PLAT_SRC_DIR}/native")
 set(PLATFORM_NATIVE_SOURCES)
+# The native window layer of a platform (tvOS uses the iOS one)
+set(PLATFORM_NATIVE_OS_DIR "${TARGET_PLATFORM_OS}")
+if(TARGET_PLATFORM_OS STREQUAL "tvos")
+    set(PLATFORM_NATIVE_OS_DIR "ios")
+endif()
 set(PLATFORM_NATIVE_VULKAN_SOURCES)
 if(NOT PLATFORM_USE_GLFW3 AND NOT DEFOLD_IS_PRIVATE_VENDOR AND NOT DEFOLD_PLATFORM_WINDOW_SOURCES)
     if(TARGET_PLATFORM_OS STREQUAL "web")
         set(PLATFORM_NATIVE_SOURCES "${PLATFORM_NATIVE_DIR}/web/web.c" "${PLATFORM_NATIVE_DIR}/native_touch.c")
     else()
         file(GLOB PLATFORM_NATIVE_COMMON CONFIGURE_DEPENDS "${PLATFORM_NATIVE_DIR}/*.c")
-        if(TARGET_PLATFORM_OS STREQUAL "ios")
+        if(TARGET_PLATFORM_OS MATCHES "^(ios|tvos)$")
             file(GLOB PLATFORM_NATIVE_OS CONFIGURE_DEPENDS
                 "${PLATFORM_NATIVE_DIR}/ios/*.m" "${PLATFORM_NATIVE_DIR}/ios/app/*.m")
         elseif(TARGET_PLATFORM_OS STREQUAL "android")
@@ -105,11 +110,15 @@ if(NOT PLATFORM_USE_GLFW3 AND NOT DEFOLD_IS_PRIVATE_VENDOR AND NOT DEFOLD_PLATFO
 endif()
 
 function(platform_configure_native target)
-    target_include_directories(${target} PRIVATE "${PLATFORM_NATIVE_DIR}" "${PLATFORM_NATIVE_DIR}/${TARGET_PLATFORM_OS}")
+    target_include_directories(${target} PRIVATE "${PLATFORM_NATIVE_DIR}" "${PLATFORM_NATIVE_DIR}/${PLATFORM_NATIVE_OS_DIR}")
     target_compile_definitions(${target} PRIVATE SDL_JOYSTICK_IOKIT)
     if(TARGET_PLATFORM_OS STREQUAL "ios")
         target_link_libraries(${target} PUBLIC "-framework UIKit" "-framework QuartzCore" "-framework OpenGLES"
             "-framework CoreVideo" "-framework CoreGraphics" "-framework CoreMotion")
+    elseif(TARGET_PLATFORM_OS STREQUAL "tvos")
+        # tvOS has no CoreMotion
+        target_link_libraries(${target} PUBLIC "-framework UIKit" "-framework QuartzCore" "-framework OpenGLES"
+            "-framework CoreVideo" "-framework CoreGraphics")
     elseif(TARGET_PLATFORM_OS STREQUAL "android")
         target_link_libraries(${target} PUBLIC android log)
         if(NOT target STREQUAL "platform_vulkan")

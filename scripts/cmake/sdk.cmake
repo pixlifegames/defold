@@ -28,10 +28,11 @@ if(NOT DEFINED DEFOLD_SDK_ROOT)
 endif()
 include("${CMAKE_CURRENT_LIST_DIR}/private_repos.cmake")
 
-if (TARGET_PLATFORM MATCHES "arm64-macos|x86_64-macos|arm64-ios|arm64_sim-ios")
+if (TARGET_PLATFORM MATCHES "arm64-macos|x86_64-macos|arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos")
     # NOTE: Minimum iOS-version is also specified in Info.plist-files
     # (MinimumOSVersion and perhaps DTPlatformVersion)
     defold_set_from_sdk_py(SOURCE VERSION_IPHONEOS_MIN TARGET SDK_VERSION_IPHONEOS_MIN)
+    defold_set_from_sdk_py(SOURCE VERSION_TVOS_MIN TARGET SDK_VERSION_TVOS_MIN)
     defold_set_from_sdk_py(SOURCE VERSION_MACOSX_MIN  TARGET SDK_VERSION_MACOSX_MIN)
     include(sdk_xcode)
 elseif (TARGET_PLATFORM MATCHES "arm64-android|armv7-android|x86_64-android")

@@ -352,6 +352,8 @@ public final class GamepadConverter {
             case "linux":
                 return "linux";
             case "ios":
+            case "tvos":
+                // tvOS reads gamepads through GameController, as iOS does
                 return "ios";
             case "android":
                 return "android";
@@ -374,7 +376,7 @@ public final class GamepadConverter {
                 if (normalized.endsWith("-linux")) {
                     return "linux";
                 }
-                if (normalized.endsWith("-ios")) {
+                if (normalized.endsWith("-ios") || normalized.endsWith("-tvos")) {
                     return "ios";
                 }
                 if (normalized.endsWith("-android")) {

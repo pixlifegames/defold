@@ -42,8 +42,11 @@ def platform_file_tags(platform):
         add("xbox")
         add("microsoft")
         add("win32")
+    elif target == "tvos":
+        # tvOS uses the iOS sources
+        add("ios")
 
-    if target in ("macos", "ios"):
+    if target in ("macos", "ios", "tvos"):
         add("darwin")
         add("apple")
 
@@ -74,7 +77,7 @@ def private_platform_file_tags(platform):
 def fallback_tags(platform):
     target = platform_target(platform)
     tags = []
-    if target in ("android", "ios", "linux", "macos", "web"):
+    if target in ("android", "ios", "tvos", "linux", "macos", "web"):
         tags.append("posix")
     tags.append("default")
     return tags

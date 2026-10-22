@@ -17,15 +17,19 @@
 #import "AppDelegate.h"
 
 #import <Foundation/Foundation.h>
+#if !TARGET_OS_TV
 #import <CoreMotion/CoreMotion.h>
+#endif
 #import <UIKit/UIKit.h>
 
 #include "internal.h"
 
 
+#if !TARGET_OS_TV
 static int                  g_AccelerometerEnabled = 0;
 static double               g_AccelerometerFrequency = 1.0 / 60.0;
 static CMMotionManager*     g_MotionManager = nil;
+#endif
 
 // AppDelegate.m
 extern UIWindow*            g_ApplicationWindow;
@@ -58,7 +62,9 @@ NSString *const FAKE_STRING = @"Abcd";
 
 - (id)initWithFrame:(CGRect)frame
 {
+#if !TARGET_OS_TV
     self.multipleTouchEnabled = YES;
+#endif
     self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     g_BaseView = self;
     if ((self = [super initWithFrame:frame]))
@@ -618,6 +624,17 @@ void dmNativeResetKeyboard( void )
 // Get physical accelerometer
 //========================================================================
 
+#if TARGET_OS_TV
+// tvOS has no accelerometer (no CoreMotion)
+int dmNativeOSGetAcceleration(float* x, float* y, float* z)
+{
+    return 0;
+}
+
+void dmNativeAccelerometerEnable()
+{
+}
+#else
 int dmNativeOSGetAcceleration(float* x, float* y, float* z)
 {
     if (g_AccelerometerEnabled) {
@@ -645,6 +662,7 @@ void dmNativeAccelerometerEnable()
     }
     g_AccelerometerEnabled = 1;
 }
+#endif
 
 //========================================================================
 // Keyboard

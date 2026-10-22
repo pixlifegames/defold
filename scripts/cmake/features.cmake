@@ -20,7 +20,7 @@ option(WITH_OPUS "Enable Opus audio support" OFF)
 option(WITH_WEBGPU "Enable WebGPU graphics backend" OFF)
 option(DEFOLD_CODESIGN "Enable code signing" OFF)
 
-if(WITH_OPENAL AND TARGET_PLATFORM MATCHES "(macos|ios)$")
+if(WITH_OPENAL AND TARGET_PLATFORM MATCHES "(macos|ios|tvos)$")
     message(FATAL_ERROR "WITH_OPENAL is not supported on macOS or iOS; these platforms use AVAudio")
 endif()
 

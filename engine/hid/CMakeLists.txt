@@ -29,7 +29,7 @@ set(hid_SOURCES
     "${HID_SRC_DIR}/hid_guid.cpp"
 )
 
-if(TARGET_PLATFORM MATCHES "arm64-macos|x86_64-macos|arm64-ios|arm64_sim-ios")
+if(TARGET_PLATFORM MATCHES "arm64-macos|x86_64-macos|arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos")
     list(APPEND hid_SOURCES
         "${HID_SRC_DIR}/native/hid_native.cpp"
         "${HID_SRC_DIR}/darwin/gamepad_darwin.mm"
@@ -58,7 +58,7 @@ endif()
 
 defold_add_library(hid STATIC ${hid_SOURCES})
 target_compile_definitions(hid PRIVATE "DLIB_LOG_DOMAIN=\"HID\"")
-if(TARGET_PLATFORM MATCHES "^(arm64-macos|x86_64-macos|arm64-ios|arm64_sim-ios)$")
+if(TARGET_PLATFORM MATCHES "^(arm64-macos|x86_64-macos|arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos)$")
     target_link_libraries(hid PUBLIC "-framework GameController")
 endif()
 defold_target_link_libraries(hid "${TARGET_PLATFORM}" SCOPE PUBLIC ${HID_DEPENDENCIES})
@@ -180,7 +180,7 @@ if(BUILD_TESTS)
     if (TARGET_PLATFORM MATCHES "arm64-android|armv7-android|x86_64-android")
         set(_DM_USE_OPENGLES ON)
 
-    elseif (TARGET_PLATFORM MATCHES "arm64-ios|arm64_sim-ios")
+    elseif (TARGET_PLATFORM MATCHES "arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos")
         target_link_libraries(test_app_hid PRIVATE "-framework IOKit" "-framework GameController")
 
     elseif (TARGET_PLATFORM MATCHES "arm64-macos|x86_64-macos")

@@ -122,7 +122,7 @@ public final class EngineArtifactsProvider {
         OS os = platform.getOsID();
         // Match the stripped native engines selected by artifacts.gradle. Keeping
         // the same subdirectory in the cache also separates Android symbols.
-        boolean stripped = os == OS.OS_ID_LINUX || os == OS.OS_ID_OSX || os == OS.OS_ID_IOS || os == OS.OS_ID_ANDROID;
+        boolean stripped = os == OS.OS_ID_LINUX || os == OS.OS_ID_OSX || os == OS.OS_ID_IOS || os == OS.OS_ID_TVOS || os == OS.OS_ID_ANDROID;
         for (String exeSuffix : exeSuffixes) {
             String exeName = platform.getExePrefix() + defaultDmengineExeName + exeSuffix;
             String artifactPath = stripped ? "stripped/" + exeName : exeName;
@@ -189,7 +189,7 @@ public final class EngineArtifactsProvider {
         if (os == OS.OS_ID_ANDROID) {
             return String.format("libdmengine%s.so", variantSuffix);
         }
-        if (os == OS.OS_ID_OSX || os == OS.OS_ID_IOS) {
+        if (os == OS.OS_ID_OSX || os == OS.OS_ID_IOS || os == OS.OS_ID_TVOS) {
             return String.format("dmengine%s.dSYM.zip", variantSuffix);
         }
         if (os == OS.OS_ID_WEB) {

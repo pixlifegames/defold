@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd" [ <!ATTLIST key merge (keep) #IMPLIED> ]>
+<plist version="1.0">
+<dict>
+        <key>BuildMachineOSBuild</key>
+        <string>26A428</string>
+        <key>CFBundleDevelopmentRegion</key>
+        <string>{{tvos.default_language}}</string>
+        <key>CFBundleDisplayName</key>
+        <string>{{project.title}}</string>
+        <key>CFBundleExecutable</key>
+        <string>{{exe-name}}</string>
+        <!-- The app icon and the Top Shelf images come from the asset catalog set in tvos.icons_asset -->
+        <key>CFBundleIcons</key>
+        <dict>
+                <key>CFBundlePrimaryIcon</key>
+                <string>App Icon</string>
+        </dict>
+        <key>TVTopShelfImage</key>
+        <dict>
+                <key>TVTopShelfPrimaryImage</key>
+                <string>Top Shelf Image</string>
+                <key>TVTopShelfPrimaryImageWide</key>
+                <string>Top Shelf Image Wide</string>
+        </dict>
+        <key>CFBundleIdentifier</key>
+        <string>{{tvos.bundle_identifier}}</string>
+        <key>CFBundleInfoDictionaryVersion</key>
+        <string>6.0</string>
+        <key>CFBundleName</key>
+        <string>{{bundle-name}}</string>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>CFBundleShortVersionString</key>
+        <string>{{project.version}}</string>
+        <key>CFBundleSignature</key>
+        <string>????</string>
+        <key>CFBundleSupportedPlatforms</key>
+        <array>
+                <string>AppleTVOS</string>
+        </array>
+        <key>CFBundleVersion</key>
+        <string>{{bundle-version}}</string>
+        <key>DTCompiler</key>
+        <string>com.apple.compilers.llvm.clang.1_0</string>
+        <key>DTPlatformBuild</key>
+        <string>24J360</string>
+        <key>DTPlatformName</key>
+        <string>appletvos</string>
+        <key>DTPlatformVersion</key>
+        <string>27.0</string>
+        <key>DTSDKBuild</key>
+        <string>24J360</string>
+        <key>DTSDKName</key>
+        <string>appletvos27.0</string>
+        <key>DTXcode</key>
+        <string>2710</string>
+        <key>DTXcodeBuild</key>
+        <string>27A9275</string>
+        <key>MinimumOSVersion</key>
+        <string>15.0</string>
+        <key>UIDeviceFamily</key>
+        <array>
+                <integer>3</integer>
+        </array>
+        <key>UIRequiredDeviceCapabilities</key>
+        <array>
+                <string>arm64</string>
+        </array>
+        <key>CFBundleLocalizations</key>
+        <array>{{#application-localizations}}
+            <string>{{.}}</string>{{/application-localizations}}
+        </array>
+
+        <key>CFBundleURLTypes</key>
+        <array>
+        </array>
+
+        <key>LSApplicationQueriesSchemes</key>
+        <array>
+                {{#application-queries-schemes}}<string>{{.}}</string>{{/application-queries-schemes}}
+        </array>
+
+        {{^variant_release}}
+        <key>NSBonjourServices</key>
+        <array>
+                <string>_defold._tcp</string>
+        </array>
+
+        <key>NSLocalNetworkUsageDescription</key>
+        <string>Discover Defold targets on the local network.</string>
+        {{/variant_release}}
+
+        <key>UILaunchStoryboardName</key>
+        <string>{{launch-screen}}</string>
+
+        <key>UIApplicationSceneManifest</key>
+        <dict>
+                <key>UIApplicationSupportsMultipleScenes</key>
+                <false/>
+                <key>UISceneConfigurations</key>
+                <dict>
+                        <key>UIWindowSceneSessionRoleApplication</key>
+                        <array>
+                                <dict>
+                                        <key>UISceneConfigurationName</key>
+                                        <string>Defold</string>
+                                        <key>UISceneClassName</key>
+                                        <string>UIWindowScene</string>
+                                        <key>UISceneDelegateClassName</key>
+                                        <string>DefoldSceneDelegate</string>
+                                </dict>
+                        </array>
+                </dict>
+        </dict>
+</dict>
+</plist>

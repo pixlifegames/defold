@@ -110,6 +110,8 @@ public class BundlerTest {
             if (Platform.getHostPlatform().isMacOS()) {
                 data.add(new Platform[]{Platform.Arm64Ios});
                 data.add(new Platform[]{Platform.Arm64IosSim});
+                data.add(new Platform[]{Platform.Arm64TvOS});
+                data.add(new Platform[]{Platform.Arm64TvOSSim});
             }
         }
         return data;
@@ -118,7 +120,8 @@ public class BundlerTest {
     private File getOutputDirFile(String outputDir, String projectName) {
         String folderName = projectName;
         if (platform == Platform.Arm64MacOS || platform == Platform.X86_64MacOS ||
-            platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim)
+            platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim ||
+            platform == Platform.Arm64TvOS || platform == Platform.Arm64TvOSSim)
         {
             folderName = projectName + ".app";
         }
@@ -126,7 +129,8 @@ public class BundlerTest {
     }
 
     private String getBundleAppFolder(String projectName) {
-        if (platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim)
+        if (platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim ||
+            platform == Platform.Arm64TvOS || platform == Platform.Arm64TvOSSim)
         {
                 return String.format("Payload/%s.app/", projectName);
         }
@@ -157,13 +161,16 @@ public class BundlerTest {
     }
 
     // The simulator and the device declare different Apple platforms. simctl refuses to
-    // install a bundle that claims iPhoneOS, so the values have to differ per platform.
+    // install a bundle that claims iPhoneOS (or AppleTVOS), so the values have to differ per platform.
     private void checkIosManifestPlatform(File manifest) throws IOException
     {
         String contents = FileUtils.readFileToString(manifest, StandardCharsets.UTF_8);
-        boolean isSimulator = platform == Platform.Arm64IosSim;
-        String expectedPlatform = isSimulator ? "iPhoneSimulator" : "iPhoneOS";
-        String expectedPlatformName = isSimulator ? "iphonesimulator" : "iphoneos";
+        boolean isSimulator = platform == Platform.Arm64IosSim || platform == Platform.Arm64TvOSSim;
+        boolean isTvOS = platform == Platform.Arm64TvOS || platform == Platform.Arm64TvOSSim;
+        String expectedPlatform = isTvOS ? (isSimulator ? "AppleTVSimulator" : "AppleTVOS")
+                                         : (isSimulator ? "iPhoneSimulator" : "iPhoneOS");
+        String expectedPlatformName = isTvOS ? (isSimulator ? "appletvsimulator" : "appletvos")
+                                             : (isSimulator ? "iphonesimulator" : "iphoneos");
 
         assertTrue(String.format("%s should declare CFBundleSupportedPlatforms %s", manifest, expectedPlatform),
                 contents.contains(String.format("<string>%s</string>", expectedPlatform)));
@@ -171,6 +178,9 @@ public class BundlerTest {
                 contents.contains(String.format("<string>%s</string>", expectedPlatformName)));
         assertTrue(String.format("%s should declare a %s DTSDKName", manifest, expectedPlatformName),
                 contents.contains(String.format("<string>%s", expectedPlatformName)));
+        // bundle_name is not set, so CFBundleName comes from the title
+        assertTrue(String.format("%s should declare the CFBundleName unnamed", manifest),
+                contents.contains("<key>CFBundleName</key>") && contents.contains("<string>unnamed</string>"));
     }
 
     // Used to check if the built and bundled test projects all contain the correct engine binaries.
@@ -230,6 +240,19 @@ public class BundlerTest {
                 "AppIcon76x76@2x~ipad.png",
                 "AppIcon83.5x83.5@2x~ipad.png",
                 "AppIcon76x76~ipad.png"
+            );
+            for (String name : names) {
+                File file = new File(outputDirFile, name);
+                checkFileExist(outputDirFile, file);
+            }
+            checkIosManifestPlatform(new File(outputDirFile, "Info.plist"));
+        }
+        else if (platform == Platform.Arm64TvOS || platform == Platform.Arm64TvOSSim)
+        {
+            // The tvOS icons come from an asset catalog (tvos.icons_asset), which the test project doesn't set
+            List<String> names = Arrays.asList(
+                exeName,
+                "Info.plist"
             );
             for (String name : names) {
                 File file = new File(outputDirFile, name);
@@ -306,7 +329,8 @@ public class BundlerTest {
             assertTrue(zip.exists());
             files = getZipFiles(zip);
         }
-        else if (platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim)
+        else if (platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim ||
+                 platform == Platform.Arm64TvOS || platform == Platform.Arm64TvOSSim)
         {
             File zip = new File(outputDirFile.getParentFile(), projectName + ".ipa");
             assertTrue(zip.exists());
@@ -475,7 +499,9 @@ public class BundlerTest {
         createFile(outputContentRoot, "builtins/manifests/web/dark_theme.css", "");
         createFile(outputContentRoot, "builtins/manifests/osx/Info.plist", "");
         // Platform keys rewritten by simulator bundling and the required scene manifest.
+        // Without the DOCTYPE the plist parser reads the indentation as text and loses the nested dictionaries.
         String IOS_INFO_PLIST = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
                 + "<plist version=\"1.0\">\n"
                 + "<dict>\n"
                 + "        <key>UIApplicationSceneManifest</key>\n"
@@ -488,10 +514,15 @@ public class BundlerTest {
                 + "        <string>iphoneos</string>\n"
                 + "        <key>DTSDKName</key>\n"
                 + "        <string>iphoneos18.0</string>\n"
+                + "        <key>CFBundleName</key>\n"
+                + "        <string>{{bundle-name}}</string>\n"
                 + "</dict>\n"
                 + "</plist>\n";
         createFile(outputContentRoot, "builtins/manifests/ios/Info.plist", IOS_INFO_PLIST);
         createFile(outputContentRoot, "builtins/manifests/ios/LaunchScreen.storyboardc/Info.plist", "");
+        String TVOS_INFO_PLIST = IOS_INFO_PLIST.replace("iPhoneOS", "AppleTVOS").replace("iphoneos", "appletvos");
+        createFile(outputContentRoot, "builtins/manifests/tvos/Info.plist", TVOS_INFO_PLIST);
+        createFile(outputContentRoot, "builtins/manifests/tvos/LaunchScreen.storyboardc/Info.plist", "");
         String ANDROID_MANIFEST = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
                 + "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"com.example\" android:versionCode=\"1\">"
                 + "  <application android:label=\"Minimal Android Application\">"
@@ -770,6 +801,20 @@ public class BundlerTest {
                 expectedFiles.add("Payload/unnamed.app/_CodeSignature/CodeResources");
             }
         }
+        else if (platform == Platform.Arm64TvOS || platform == Platform.Arm64TvOSSim)
+        {
+            expectedFiles.add("Payload/unnamed.app/unnamed");
+            expectedFiles.add("Payload/unnamed.app/Info.plist");
+            expectedFiles.add("Payload/unnamed.app/LaunchScreen.storyboardc/Info.plist");
+            expectedFiles.add("Payload/unnamed.app/game.arcd");
+            expectedFiles.add("Payload/unnamed.app/game.arci");
+            expectedFiles.add("Payload/unnamed.app/game.dmanifest");
+            expectedFiles.add("Payload/unnamed.app/game.projectc");
+            if (platform == Platform.Arm64TvOSSim) {
+                // Simulator bundles are always ad-hoc signed
+                expectedFiles.add("Payload/unnamed.app/_CodeSignature/CodeResources");
+            }
+        }
         else if (platform == Platform.X86_64MacOS || platform == Platform.Arm64MacOS)
         {
             expectedFiles.add("Contents/MacOS/unnamed");
@@ -988,7 +1033,8 @@ public class BundlerTest {
             return libName;
         } else if (platform == Platform.X86_64MacOS || platform == Platform.Arm64MacOS) {
             return "Contents/MacOS/" + libName;
-        } else if (platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim) {
+        } else if (platform == Platform.Arm64Ios || platform == Platform.Arm64IosSim ||
+                   platform == Platform.Arm64TvOS || platform == Platform.Arm64TvOSSim) {
             return "Payload/unnamed.app/" + libName;
         } else if (platform == Platform.Armv7Android) {
             return "lib/armeabi-v7a/" + libName;

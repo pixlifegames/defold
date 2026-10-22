@@ -117,3 +117,21 @@ platforms:
             libs: ["physics_null"]
             frameworks: []
             linkFlags: []
+
+    arm64-tvos:
+        context:
+            excludeLibs: ["physics","LinearMath","BulletDynamics","BulletCollision","box2d","box2d_defold","script_box2d","script_box2d_defold"]
+            excludeSymbols: ["ScriptBox2DExt"]
+            symbols: []
+            libs: ["physics_null"]
+            frameworks: []
+            linkFlags: []
+
+    arm64_sim-tvos:
+        context:
+            excludeLibs: ["physics","LinearMath","BulletDynamics","BulletCollision","box2d","box2d_defold","script_box2d","script_box2d_defold"]
+            excludeSymbols: ["ScriptBox2DExt"]
+            symbols: []
+            libs: ["physics_null"]
+            frameworks: []
+            linkFlags: []

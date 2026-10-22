@@ -761,7 +761,7 @@
 ;; Migrates legacy mobile backend libraries without changing desktop libraries,
 ;; custom inputs, invalid fields, or the meaning of Vulkan-only exclusions.
 (deftest mobile-platform-library-migration-test
-  (doseq [platform (into #{:android :ios :web} cat [app-manifest/android app-manifest/ios app-manifest/web])]
+  (doseq [platform (into #{:android :ios :tvos :web} cat [app-manifest/android app-manifest/ios app-manifest/tvos app-manifest/web])]
     (let [context {:libs ["graphics_vulkan" "dmglfw_vulkan" "custom"]
                    :excludeLibs ["graphics_opengles" "dmglfw"]
                    :engineLibs ["dmglfw" nil 42]

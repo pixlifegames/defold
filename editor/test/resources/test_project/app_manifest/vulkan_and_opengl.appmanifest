@@ -125,3 +125,21 @@ platforms:
             libs: []
             frameworks: []
             linkFlags: []
+
+    arm64-tvos:
+        context:
+            excludeLibs: []
+            excludeSymbols: []
+            symbols: []
+            libs: []
+            frameworks: []
+            linkFlags: []
+
+    arm64_sim-tvos:
+        context:
+            excludeLibs: []
+            excludeSymbols: []
+            symbols: []
+            libs: []
+            frameworks: []
+            linkFlags: []

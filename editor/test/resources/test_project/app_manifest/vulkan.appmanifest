@@ -122,3 +122,21 @@ platforms:
             libs: []
             frameworks: []
             linkFlags: []
+
+    arm64-tvos:
+        context:
+            excludeLibs: ["graphics_metal"]
+            excludeSymbols: ["GraphicsAdapterMetal"]
+            symbols: []
+            libs: []
+            frameworks: []
+            linkFlags: []
+
+    arm64_sim-tvos:
+        context:
+            excludeLibs: ["graphics_metal"]
+            excludeSymbols: ["GraphicsAdapterMetal"]
+            symbols: []
+            libs: []
+            frameworks: []
+            linkFlags: []

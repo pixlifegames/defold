@@ -115,7 +115,7 @@ local function bundle_windows(show_dialog)
     editor.bundle.create(config, output_directory, {platform = config.platform, architectures = config.platform})
 end
 
---- IOS
+--- IOS AND TVOS
 
 local function make_setter_with_validation(set_config, set_error, errors_fn)
     return function(...)
@@ -200,11 +200,51 @@ local function launch_ios_app(ios_deploy, device_id, app_path)
     end
 end
 
+-- devicectl (Xcode 15+) installs on devices paired over the network, like an Apple TV
+local function get_devicectl_device(os_name)
+    local success, output = pcall(editor.execute, "xcrun", "devicectl", "list", "devices", "--json-output", "-", "-q", {reload_resources = false, out = "capture"})
+    if not success then
+        print("Failed to list devices")
+        error(editor.bundle.abort_message)
+    end
+    local devices = json.decode(output).result.devices
+    for i = 1, #devices do
+        local d = devices[i]
+        -- newer Xcode versions have the device fields in "properties", older ones only the deprecated fields
+        local hardware = d.properties and d.properties.hardware or d.hardwareProperties
+        local connection = d.properties and d.properties.connection or d.connectionProperties
+        local name = d.properties and d.properties.state.name or d.deviceProperties.name
+        if hardware.platform == os_name and hardware.reality == "physical"
+            and connection.pairingState == "paired" and connection.state ~= "unavailable" then
+            return {id = d.identifier, label = name}
+        end
+    end
+    print("No devices are connected")
+    error(editor.bundle.abort_message)
+end
+
+local function install_devicectl_app(device_id, app_path)
+    local success = pcall(editor.execute, "xcrun", "devicectl", "device", "install", "app", "--device", device_id, app_path, {reload_resources = false})
+    if not success then
+        print("Failed to install the app")
+        error(editor.bundle.abort_message)
+    end
+end
+
+local function launch_devicectl_app(device_id, bundle_identifier)
+    local success = pcall(editor.execute, "xcrun", "devicectl", "device", "process", "launch", "--device", device_id, "--terminate-existing", bundle_identifier, {reload_resources = false})
+    if not success then
+        print("Failed to launch the app")
+        error(editor.bundle.abort_message)
+    end
+end
+
 local identity_to_string = editor.bundle.make_to_string_lookup({
     [""] = localization.message("dialog.bundle.option.identity.none")
 })
 
-local function bundle_ios(show_dialog)
+-- apple: the platform to bundle, ios or tvos below
+local function bundle_apple(show_dialog, apple)
     local identities_string = editor.execute("security", "find-identity", "-v", "-p", "codesigning", {
         reload_resources = false,
         out = "capture"
@@ -217,7 +257,7 @@ local function bundle_ios(show_dialog)
         identities[#identities+1] = name
     end
 
-    local function ios_errors(config)
+    local function signing_errors(config)
         local ret = {}
         -- simulator bundles are always ad-hoc signed, so only device bundles validate signing
         local sign = config.sign and not config.simulator
@@ -251,12 +291,12 @@ local function bundle_ios(show_dialog)
         identity_options[#identity_options+1] = identities[i]
     end
 
-    local ios_dialog = editor.ui.component(function(props)
+    local dialog = editor.ui.component(function(props)
         local config, set_config_raw = editor.ui.use_state(props.config)
         local errors, set_errors = editor.ui.use_state(props.errors)
-        local set_config = editor.ui.use_memo(make_setter_with_validation, set_config_raw, set_errors, ios_errors)
+        local set_config = editor.ui.use_memo(make_setter_with_validation, set_config_raw, set_errors, signing_errors)
         local sign_enabled = not config.simulator
-        return editor.bundle.dialog(localization.message("dialog.bundle.header.ios"), config, nil, errors and select(2, next(errors)), {
+        return editor.bundle.dialog(localization.message(apple.header), config, nil, errors and select(2, next(errors)), {
             editor.bundle.grid_row(localization.message("dialog.bundle.label.sign-application"), editor.bundle.check_box(config, set_config, "sign", nil, {
                 enabled = sign_enabled,
                 issue = errors and errors.sign and {
@@ -291,9 +331,9 @@ local function bundle_ios(show_dialog)
         })
     end)
 
-    local config = editor.bundle.config(show_dialog, "bundle.ios", ios_dialog, ios_errors)
+    local config = editor.bundle.config(show_dialog, apple.config_key, dialog, signing_errors)
 
-    local platform = config.simulator and "arm64_sim-ios" or "arm64-ios"
+    local platform = config.simulator and apple.simulator_platform or apple.device_platform
     local sign = config.sign and not config.simulator
 
     local output_directory = editor.bundle.output_directory(show_dialog, platform)
@@ -306,22 +346,65 @@ local function bundle_ios(show_dialog)
     })
 
     if config.install and not config.simulator then
-        print("Resolving ios-deploy location...")
-        local ios_deploy = get_ios_deploy_command()
-        print(("Resolved to '%s', listing devices..."):format(ios_deploy))
-        local device = get_ios_device(ios_deploy)
+        local device = apple.find_device()
         print(("Installing on '%s'"):format(device.label))
         local project_title = editor.get("/game.project", "project.title")
         local app_path = output_directory .. "/" .. project_title .. ".app"
-        install_ios_app(ios_deploy, device.id, app_path)
+        apple.install_app(device, app_path)
         if config.launch then
             print(("Launching %s..."):format(project_title))
-            launch_ios_app(ios_deploy, device.id, app_path)
+            apple.launch_app(device, app_path)
             print("Install and launch done.")
         else
             print("Install done.")
         end
     end
+end
+
+local ios = {
+    header = "dialog.bundle.header.ios",
+    config_key = "bundle.ios",
+    device_platform = "arm64-ios",
+    simulator_platform = "arm64_sim-ios",
+    find_device = function()
+        print("Resolving ios-deploy location...")
+        local ios_deploy = get_ios_deploy_command()
+        print(("Resolved to '%s', listing devices..."):format(ios_deploy))
+        local device = get_ios_device(ios_deploy)
+        device.ios_deploy = ios_deploy
+        return device
+    end,
+    install_app = function(device, app_path)
+        install_ios_app(device.ios_deploy, device.id, app_path)
+    end,
+    launch_app = function(device, app_path)
+        launch_ios_app(device.ios_deploy, device.id, app_path)
+    end
+}
+
+local tvos = {
+    header = "dialog.bundle.header.tvos",
+    config_key = "bundle.tvos",
+    device_platform = "arm64-tvos",
+    simulator_platform = "arm64_sim-tvos",
+    find_device = function()
+        print("Listing devices...")
+        return get_devicectl_device("tvOS")
+    end,
+    install_app = function(device, app_path)
+        install_devicectl_app(device.id, app_path)
+    end,
+    launch_app = function(device, app_path)
+        launch_devicectl_app(device.id, editor.get("/game.project", "tvos.bundle_identifier"))
+    end
+}
+
+local function bundle_ios(show_dialog)
+    bundle_apple(show_dialog, ios)
+end
+
+local function bundle_tvos(show_dialog)
+    bundle_apple(show_dialog, tvos)
 end
 
 --- ANDROID
@@ -539,6 +622,9 @@ function M.get_commands()
         editor.bundle.command(localization.message("command.project.bundle-ios"), "project.bundle-ios", bundle_ios, {
             active = function() return is_macos end
         }),
+        editor.bundle.command(localization.message("command.project.bundle-tvos"), "project.bundle-tvos", bundle_tvos, {
+            active = function() return is_macos end
+        }),
         editor.bundle.command(localization.message("command.project.bundle-android"), "project.bundle-android", bundle_android),
         editor.bundle.command(localization.message("command.project.bundle-macos"), "project.bundle-macos", bundle_macos),
         editor.bundle.command(localization.message("command.project.bundle-windows"), "project.bundle-windows", bundle_windows),
@@ -578,6 +664,14 @@ function M.get_prefs_schema()
             platform = editor.prefs.schema.enum({values = windows_platforms})
         }),
         ["bundle.ios"] = editor.bundle.config_schema(editor.bundle.common_variant_schema, {
+            sign = editor.prefs.schema.boolean({default = true}),
+            ["code-signing-identity"] = editor.prefs.schema.string(),
+            ["provisioning-profile"] = editor.prefs.schema.string(),
+            simulator = editor.prefs.schema.boolean(),
+            install = editor.prefs.schema.boolean(),
+            launch = editor.prefs.schema.boolean()
+        }),
+        ["bundle.tvos"] = editor.bundle.config_schema(editor.bundle.common_variant_schema, {
             sign = editor.prefs.schema.boolean({default = true}),
             ["code-signing-identity"] = editor.prefs.schema.string(),
             ["provisioning-profile"] = editor.prefs.schema.string(),

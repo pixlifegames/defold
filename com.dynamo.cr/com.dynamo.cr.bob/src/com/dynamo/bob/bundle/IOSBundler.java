@@ -171,6 +171,17 @@ public class IOSBundler implements IBundler {
         return title.substring(0, Math.min(title.length(), 15));
     }
 
+    // A wildcard provisioning profile has an application identifier like "TEAMID.*" or "TEAMID.com.example.*".
+    // A device installs an app only when it is signed with its own identifier, so the bundle identifier takes the
+    // place of the wildcard, as Xcode does.
+    public static String resolveApplicationIdentifier(String applicationIdentifier, String bundleIdentifier) {
+        if (applicationIdentifier == null || !applicationIdentifier.endsWith("*")) {
+            return applicationIdentifier;
+        }
+        String teamId = applicationIdentifier.substring(0, applicationIdentifier.indexOf('.'));
+        return teamId + "." + bundleIdentifier;
+    }
+
     @Override
     public void updateManifestProperties(Project project, Platform platform,
                                 BobProjectProperties projectProperties,
@@ -694,6 +705,11 @@ public class IOSBundler implements IBundler {
                             entitlements.append(customEntitlements);
                         }
                     }
+                    String applicationIdentifier = entitlements.getString("application-identifier", null);
+                    if (applicationIdentifier != null) {
+                        entitlements.setProperty("application-identifier", resolveApplicationIdentifier(applicationIdentifier, bundleIdentifier));
+                    }
+
                     FileWriter writer = new FileWriter(entitlementOut);
                     FileLocatorBuilder builder = FileLocatorUtils.fileLocator();
                     FileLocator locator = new FileLocator(builder);

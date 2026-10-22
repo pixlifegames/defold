@@ -152,9 +152,44 @@ public class IOSBundler implements IBundler {
     // codesign uses "-" to select ad-hoc signing
     private static final String ADHOC_SIGN_IDENTITY = "-";
 
+    // The game.project section with the settings of the platform (tvOS bundles share this bundler)
+    protected String getPlatformSection() {
+        return "ios";
+    }
+
+    protected String getPlatformDisplayName() {
+        return "iOS";
+    }
+
+    protected boolean isSimulator(Platform platform) {
+        return platform == Platform.Arm64IosSim;
+    }
+
+    // The SDK platform names of the device and the simulator (DTPlatformName)
+    protected String getDeviceSdkName() {
+        return "iphoneos";
+    }
+
+    protected String getSimulatorSdkName() {
+        return "iphonesimulator";
+    }
+
+    // The platform of the simulator in CFBundleSupportedPlatforms
+    protected String getSimulatorPlatformName() {
+        return "iPhoneSimulator";
+    }
+
+    protected boolean hasInterfaceOrientations() {
+        return true;
+    }
+
+    protected void copyIcons(BundleHelper helper) throws IOException {
+        helper.copyIosIcons();
+    }
+
     @Override
     public IResource getManifestResource(Project project, Platform platform) throws IOException {
-        return project.getResource("ios", "infoplist");
+        return project.getResource(getPlatformSection(), "infoplist");
     }
 
     @Override
@@ -180,7 +215,8 @@ public class IOSBundler implements IBundler {
 
         List<String> applicationQueriesSchemes = new ArrayList<String>();
         List<String> urlSchemes = new ArrayList<String>();
-        String bundleId = projectProperties.getStringValue("ios", "bundle_identifier");
+        String section = getPlatformSection();
+        String bundleId = projectProperties.getStringValue(section, "bundle_identifier");
         if (bundleId != null) {
             urlSchemes.add(bundleId);
         }
@@ -189,14 +225,25 @@ public class IOSBundler implements IBundler {
 
         properties.put("url-schemes", urlSchemes);
         properties.put("application-queries-schemes", applicationQueriesSchemes);
-        properties.put("bundle-name", projectProperties.getStringValue("ios", "bundle_name", derivedBundleName(title)));
-        properties.put("bundle-version", projectProperties.getStringValue("ios", "bundle_version",
+        properties.put("bundle-name", projectProperties.getStringValue(section, "bundle_name", derivedBundleName(title)));
+        properties.put("bundle-version", projectProperties.getStringValue(section, "bundle_version",
             projectProperties.getStringValue("project", "version", "1.0")
         ));
 
-        String launchScreen = projectProperties.getStringValue("ios", "launch_screen", "LaunchScreen");
+        String launchScreen = projectProperties.getStringValue(section, "launch_screen", "LaunchScreen");
         properties.put("launch-screen", FilenameUtils.getBaseName(launchScreen));
 
+        if (hasInterfaceOrientations()) {
+            properties.put("orientation-support", getOrientationSupport(projectProperties));
+        }
+
+        String applicationLocalizationsStr = projectProperties.getStringValue(section, "localizations", null);
+        List<String> applicationLocalizations = BundleHelper.createArrayFromString(applicationLocalizationsStr);
+        properties.put("application-localizations", applicationLocalizations);
+
+    }
+
+    private static List<String> getOrientationSupport(BobProjectProperties projectProperties) {
         List<String> orientationSupport = new ArrayList<String>();
         if(projectProperties.getBooleanValue("display", "dynamic_orientation", false)==false) {
             Integer displayWidth = projectProperties.getIntValue("display", "width", 960);
@@ -214,37 +261,37 @@ public class IOSBundler implements IBundler {
             orientationSupport.add("LandscapeLeft");
             orientationSupport.add("LandscapeRight");
         }
-        properties.put("orientation-support", orientationSupport);
-
-        String applicationLocalizationsStr = projectProperties.getStringValue("ios", "localizations", null);
-        List<String> applicationLocalizations = BundleHelper.createArrayFromString(applicationLocalizationsStr);
-        properties.put("application-localizations", applicationLocalizations);
-
+        return orientationSupport;
     }
 
     public static void validateSceneManifest(String manifest) throws IOException {
+        validateSceneManifest(manifest, "ios");
+    }
+
+    // section: the game.project section of the manifest, "ios" or "tvos"
+    public static void validateSceneManifest(String manifest, String section) throws IOException {
         XMLPropertyListConfiguration plist = new XMLPropertyListConfiguration();
         try {
             plist.read(new StringReader(manifest));
         } catch (ConfigurationException e) {
-            throw new IOException("Unable to read ios.infoplist", e);
+            throw new IOException("Unable to read " + section + ".infoplist", e);
         }
         String multipleScenes = "UIApplicationSceneManifest.UIApplicationSupportsMultipleScenes";
         if (!plist.containsKey(multipleScenes) || plist.getBoolean(multipleScenes, true)) {
-            throw new IOException("ios.infoplist must contain UIApplicationSceneManifest with UIApplicationSupportsMultipleScenes set to false. Update custom plists from /builtins/manifests/ios/Info.plist.");
+            throw new IOException(section + ".infoplist must contain UIApplicationSceneManifest with UIApplicationSupportsMultipleScenes set to false. Update custom plists from /builtins/manifests/" + section + "/Info.plist.");
         }
         String configuration = "UIApplicationSceneManifest.UISceneConfigurations.UIWindowSceneSessionRoleApplication";
         for (Object value : plist.getList(configuration)) {
             if (!(value instanceof XMLPropertyListConfiguration)) {
-                throw new IOException("ios.infoplist application scene configurations must be dictionaries.");
+                throw new IOException(section + ".infoplist application scene configurations must be dictionaries.");
             }
             XMLPropertyListConfiguration scene = (XMLPropertyListConfiguration) value;
             String delegate = scene.getString("UISceneDelegateClassName", "DefoldSceneDelegate");
             if (!"DefoldSceneDelegate".equals(delegate)) {
-                throw new IOException("ios.infoplist must use DefoldSceneDelegate for the application scene.");
+                throw new IOException(section + ".infoplist must use DefoldSceneDelegate for the application scene.");
             }
             if (scene.containsKey("UISceneStoryboardFile")) {
-                throw new IOException("ios.infoplist must not set UISceneStoryboardFile. Defold creates the game window programmatically; use UILaunchStoryboardName for the launch screen.");
+                throw new IOException(section + ".infoplist must not set UISceneStoryboardFile. Defold creates the game window programmatically; use UILaunchStoryboardName for the launch screen.");
             }
         }
     }
@@ -255,7 +302,7 @@ public class IOSBundler implements IBundler {
         // remove attribute definition (https://github.com/defold/defold/pull/6914)
         // it is automatically removed if the manifest was merged
         manifest = manifest.replace("[ <!ATTLIST key merge (keep) #IMPLIED> ]", "");
-        validateSceneManifest(manifest);
+        validateSceneManifest(manifest, getPlatformSection());
         FileUtils.write(manifestFile, manifest);
     }
 
@@ -314,21 +361,21 @@ public class IOSBundler implements IBundler {
     private static void plutilReplace(File manifestFile, String key, String type, String value) throws IOException {
         Result result = Exec.execResult("plutil", "-replace", key, type, value, manifestFile.getAbsolutePath());
         if (result.ret != 0) {
-            throw new IOException(String.format("Failed to update '%s' in '%s' for the iOS Simulator:%n%s",
+            throw new IOException(String.format("Failed to update '%s' in '%s' for the simulator:%n%s",
                     key, manifestFile, new String(result.stdOutErr)));
         }
     }
 
-    // simctl refuses to install a bundle that declares the iPhoneOS platform
-    private static void updateManifestForSimulator(File manifestFile) throws IOException {
-        plutilReplace(manifestFile, "CFBundleSupportedPlatforms", "-json", "[\"iPhoneSimulator\"]");
-        plutilReplace(manifestFile, "DTPlatformName", "-string", "iphonesimulator");
+    // simctl refuses to install a bundle that declares the device platform (e.g. iPhoneOS)
+    private void updateManifestForSimulator(File manifestFile) throws IOException {
+        plutilReplace(manifestFile, "CFBundleSupportedPlatforms", "-json", "[\"" + getSimulatorPlatformName() + "\"]");
+        plutilReplace(manifestFile, "DTPlatformName", "-string", getSimulatorSdkName());
 
         Result sdkName = Exec.execResult("plutil", "-extract", "DTSDKName", "raw", "-o", "-", manifestFile.getAbsolutePath());
         if (sdkName.ret == 0) {
             String value = new String(sdkName.stdOutErr).trim();
-            if (value.startsWith("iphoneos")) {
-                plutilReplace(manifestFile, "DTSDKName", "-string", value.replace("iphoneos", "iphonesimulator"));
+            if (value.startsWith(getDeviceSdkName())) {
+                plutilReplace(manifestFile, "DTSDKName", "-string", value.replace(getDeviceSdkName(), getSimulatorSdkName()));
             }
         }
     }
@@ -337,13 +384,14 @@ public class IOSBundler implements IBundler {
     public void bundleApplication(Project project, Platform platform, File bundleDir, ICanceled canceled) throws IOException, CompileExceptionError {
         logger.info("Entering IOSBundler.bundleApplication()");
 
-        String bundleIdentifier = project.getProjectProperties().getStringValue("ios", "bundle_identifier");
+        final String section = getPlatformSection();
+        String bundleIdentifier = project.getProjectProperties().getStringValue(section, "bundle_identifier");
         if (bundleIdentifier == null) {
-            throw new CompileExceptionError("No value for 'ios.bundle_identifier' set in game.project");
+            throw new CompileExceptionError("No value for '" + section + ".bundle_identifier' set in game.project");
         }
 
         if (!BundleHelper.isValidAppleBundleIdentifier(bundleIdentifier)) {
-            throw new CompileExceptionError("iOS bundle identifier '" + bundleIdentifier + "' is not valid.");
+            throw new CompileExceptionError(getPlatformDisplayName() + " bundle identifier '" + bundleIdentifier + "' is not valid.");
         }
 
         BundleHelper.throwIfCanceled(canceled);
@@ -370,9 +418,9 @@ public class IOSBundler implements IBundler {
         boolean shouldSign = provisioningProfile != null && identity != null;
 
         // The simulator cannot use device signing; simctl installs ad-hoc signed bundles
-        final boolean isSimulator = platform == Platform.Arm64IosSim;
+        final boolean isSimulator = isSimulator(platform);
         if (isSimulator && shouldSign) {
-            logger.info("Signing identity and provisioning profile are not used for iOS Simulator bundles. Using ad-hoc signing.");
+            logger.info("Signing identity and provisioning profile are not used for " + getPlatformDisplayName() + " Simulator bundles. Using ad-hoc signing.");
             shouldSign = false;
         }
 
@@ -410,19 +458,19 @@ public class IOSBundler implements IBundler {
 
         BundleHelper.throwIfCanceled(canceled);
 
-        String launchScreen = projectProperties.getStringValue("ios", "launch_screen");
+        String launchScreen = projectProperties.getStringValue(section, "launch_screen");
         // It might be null if the user uses the "bundle_resources" to copy everything
         if (launchScreen != null) {
             final String launchScreenBaseName = FilenameUtils.getName(launchScreen);
             IResource source = project.getResource(launchScreen);
             IResource storyboardPlist = project.getResource(launchScreen + "/Info.plist");
             if (source == null) {
-                throw new IOException(String.format("'ios.launch_screen' = '%s' does not exist", source));
+                throw new IOException(String.format("'%s.launch_screen' = '%s' does not exist", section, source));
             }
             // We cannot really if it's a directory, due to our resource abstractions
             // but we can check for a file that should be there, the Info.plist
             if (storyboardPlist == null) {
-                throw new IOException(String.format("'ios.launch_screen' = '%s' does not contain an Info.plist", source));
+                throw new IOException(String.format("'%s.launch_screen' = '%s' does not contain an Info.plist", section, source));
             }
 
             // Get all files that needs copying
@@ -452,16 +500,16 @@ public class IOSBundler implements IBundler {
             }
         } else
         {
-            logger.warning("ios.launch_screen is not set");
+            logger.warning(section + ".launch_screen is not set");
         }
 
-        String iconsAsset = projectProperties.getStringValue("ios", "icons_asset");
+        String iconsAsset = projectProperties.getStringValue(section, "icons_asset");
         // It might be null if the user uses the "bundle_resources" to copy everything
         if (iconsAsset != null) {
             final String iconsName = FilenameUtils.getName(iconsAsset);
             IResource source = project.getResource(iconsAsset);
             if (source == null) {
-                throw new IOException(String.format("'ios.icons_asset' = '%s' does not exist", source));
+                throw new IOException(String.format("'%s.icons_asset' = '%s' does not exist", section, source));
             }
 
             File target = new File(appDir, iconsName);
@@ -475,7 +523,7 @@ public class IOSBundler implements IBundler {
             }
         }
         else {
-            logger.warning("ios.icons_asset is not set");
+            logger.warning(section + ".icons_asset is not set");
         }
 
         BundleHelper helper = new BundleHelper(project, platform, bundleDir, variant, this);
@@ -483,7 +531,7 @@ public class IOSBundler implements IBundler {
         if (isSimulator) {
             updateManifestForSimulator(new File(appDir, MANIFEST_NAME));
         }
-        helper.copyIosIcons();
+        copyIcons(helper);
 
         BundleHelper.throwIfCanceled(canceled);
         // Copy bundle resources into .app folder
@@ -587,7 +635,7 @@ public class IOSBundler implements IBundler {
         // Copy any libswift*.dylib files from the Frameworks folder
         if (frameworksDir.exists()) {
             logger.fine("Copying to /SwiftSupport folder");
-            File iphoneosDir = new File(swiftSupportDir, "iphoneos");
+            File sdkDir = new File(swiftSupportDir, getDeviceSdkName());
 
             for (File file : frameworksDir.listFiles(File::isFile)) {
 
@@ -602,10 +650,10 @@ public class IOSBundler implements IBundler {
 
                 if (!swiftSupportDir.exists()) {
                     swiftSupportDir.mkdir();
-                    iphoneosDir.mkdir();
+                    sdkDir.mkdir();
                 }
 
-                File dst = new File(iphoneosDir, file.getName());
+                File dst = new File(sdkDir, file.getName());
                 FileUtils.copyFile(file, dst);
                 System.out.printf("Copying %s to %s\n", file, dst);
             }
@@ -634,8 +682,8 @@ public class IOSBundler implements IBundler {
             }
 
             File entitlementOut = project.createTempFile("entitlement", ".xcent");
-            String customEntitlementsProperty = projectProperties.getStringValue("ios", "entitlements");
-            Boolean overrideEntitlementsProperty = projectProperties.getBooleanValue("ios", "override_entitlements", false);
+            String customEntitlementsProperty = projectProperties.getStringValue(section, "entitlements");
+            Boolean overrideEntitlementsProperty = projectProperties.getBooleanValue(section, "override_entitlements", false);
 
             BundleHelper.throwIfCanceled(canceled);
 
@@ -687,7 +735,7 @@ public class IOSBundler implements IBundler {
 
                                 if (entitlements.getProperty(key) == null) {
                                     logger.severe("No such key found in provisions profile entitlements '" + key + "'.");
-                                    throw new IOException("Invalid custom iOS entitlements key '" + key + "'.");
+                                    throw new IOException("Invalid custom " + getPlatformDisplayName() + " entitlements key '" + key + "'.");
                                 }
                                 entitlements.clearProperty(key);
                             }

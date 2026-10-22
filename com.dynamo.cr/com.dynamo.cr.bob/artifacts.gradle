@@ -66,7 +66,7 @@ add('lib/classes.dex', engineArtifact('share/java/classes.dex', 'arm64-android/c
     add(path, new File(bobDir, path))
 }
 
-def enginePlatforms = desktopPlatforms + ['arm64-ios', 'arm64_sim-ios', 'armv7-android', 'arm64-android', 'x86_64-android', 'wasm-web', 'wasm_pthread-web']
+def enginePlatforms = desktopPlatforms + ['arm64-ios', 'arm64_sim-ios', 'arm64-tvos', 'arm64_sim-tvos', 'armv7-android', 'arm64-android', 'x86_64-android', 'wasm-web', 'wasm_pthread-web']
 def engines = ['dmengine', 'dmengine_release']
 if (settings.preferLocalEngines) {
     engines.add('dmengine_headless')

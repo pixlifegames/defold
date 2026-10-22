@@ -39,6 +39,8 @@ typedef enum WindowDeviceState
     WINDOW_DEVICE_STATE_KEYBOARD_PASSWORD   = 7,
     WINDOW_DEVICE_STATE_KEYBOARD_RESET      = 8,
     WINDOW_DEVICE_STATE_JOYSTICK_PRESENT    = 9,
+    WINDOW_DEVICE_STATE_MENU_IS_BACK        = 10, // tvOS: the remote's Menu press is KEY_BACK instead of going home
+    WINDOW_DEVICE_STATE_REMOTE_TOUCH        = 11, // tvOS: the remote's touch surface is reported as touches
     WINDOW_DEVICE_STATE_MAX
 } WindowDeviceState;
 

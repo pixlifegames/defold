@@ -31,6 +31,7 @@
 #include "scripts/script_collection_factory.h"
 #include "scripts/script_resource.h"
 #include "scripts/script_window.h"
+#include "scripts/script_tvos.h"
 #include "scripts/script_collectionproxy.h"
 #include "scripts/script_buffer.h"
 #include "scripts/script_sys_gamesys.h"
@@ -544,6 +545,7 @@ namespace dmGameSystem
         ScriptSoundRegister(context);
         ScriptResourceRegister(context);
         ScriptWindowRegister(context);
+        ScriptTVOSRegister(context);
         ScriptCollectionProxyRegister(context);
         ScriptSysGameSysRegister(context);
         assert(top == lua_gettop(L));

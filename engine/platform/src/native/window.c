@@ -60,7 +60,7 @@ void dmNativeInputDeactivation( void )
     // Release all keyboard keys
     for( i = 0; i <= NATIVE_KEY_LAST; i ++ )
     {
-        if( dmNativeInput.Key[ i ] == NATIVE_PRESS )
+        if( dmNativeInput.Key[ i ] == NATIVE_PRESS || dmNativeInput.Key[ i ] == NATIVE_PRESS_UNREAD )
         {
             dmNativeInputKey( i, NATIVE_RELEASE );
         }
@@ -132,28 +132,35 @@ void dmNativeClearInput( void )
 void dmNativeInputKey( int key, int action )
 {
     int keyrepeat = 0;
+    int pressed;
 
     if( key < 0 || key > NATIVE_KEY_LAST )
     {
         return;
     }
 
+    pressed = dmNativeInput.Key[ key ] == NATIVE_PRESS || dmNativeInput.Key[ key ] == NATIVE_PRESS_UNREAD;
+
     // Are we trying to release an already released key?
-    if( action == NATIVE_RELEASE && dmNativeInput.Key[ key ] != NATIVE_PRESS )
+    if( action == NATIVE_RELEASE && !pressed )
     {
         return;
     }
 
     // Register key action
-    if( action == NATIVE_RELEASE && dmNativeInput.StickyKeys )
+    if( action == NATIVE_RELEASE && (dmNativeInput.StickyKeys || dmNativeInput.Key[ key ] == NATIVE_PRESS_UNREAD) )
     {
+        // A press that is released before dmNativeGetKey has read it is still reported once (e.g. the Menu button
+        // of the tvOS remote, which reports its press and its release at the same time)
         dmNativeInput.Key[ key ] = NATIVE_STICK;
     }
     else
     {
-        keyrepeat = (dmNativeInput.Key[ key ] == NATIVE_PRESS) &&
-                    (action == NATIVE_PRESS);
-        dmNativeInput.Key[ key ] = (char) action;
+        keyrepeat = pressed && (action == NATIVE_PRESS);
+        if( !keyrepeat )
+        {
+            dmNativeInput.Key[ key ] = (char) (action == NATIVE_PRESS ? NATIVE_PRESS_UNREAD : action);
+        }
     }
 
     // Call user callback function

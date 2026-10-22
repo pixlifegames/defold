@@ -161,6 +161,7 @@ struct AppleGamepadDevice
     uint8_t       m_HasLegacyMapping            : 1;
     uint8_t       m_IsRaw                       : 1;
     uint8_t       m_UsesNintendoFaceButtonLayout: 1;
+    uint8_t       m_IsMicroGamepad              : 1;
 };
 
 struct AppleGamepadDriver : GamepadDriver
@@ -1439,6 +1440,31 @@ static void AppleGamepadDriverUpdateLegacyMapped(AppleGamepadDevice* apple_devic
         packet.m_Axis[i] = axis_values[i];
 }
 
+#if TARGET_OS_TV
+// Writes the SDL-style packet layout for the Siri Remote.
+static void AppleGamepadDriverUpdateMicro(GCMicroGamepad* micro_gamepad, GamepadPacket& packet)
+{
+    packet.m_Axis[GAMEPAD_MAPPED_AXIS_LEFT_TRIGGER] = -1.0f;
+    packet.m_Axis[GAMEPAD_MAPPED_AXIS_RIGHT_TRIGGER] = -1.0f;
+
+    SetButtonValue(packet, GAMEPAD_MAPPED_BUTTON_A, micro_gamepad.buttonA.isPressed);
+    SetButtonValue(packet, GAMEPAD_MAPPED_BUTTON_X, micro_gamepad.buttonX.isPressed);
+
+    // The touch surface (all of it on the first Siri Remote, the center of the clickpad on later ones) is the left
+    // stick. The d-pad of GCMicroGamepad follows the thumb from where it touched down.
+    packet.m_Axis[GAMEPAD_MAPPED_AXIS_LEFT_X] = micro_gamepad.dpad.xAxis.value;
+    packet.m_Axis[GAMEPAD_MAPPED_AXIS_LEFT_Y] = -micro_gamepad.dpad.yAxis.value;
+
+    // The clickpad ring (2nd generation Siri Remote and later) moves only when clicked. The first Siri Remote has no
+    // ring, its hat stays centered.
+    GCControllerDirectionPad* ring = micro_gamepad.dpads[GCInputDirectionalCardinalDpad];
+    if (ring != nil)
+    {
+        packet.m_Hat[0] = GetHatValue(ring);
+    }
+}
+#endif
+
 // Selects the physical packet builder for the active mapping.
 static void AppleGamepadDriverUpdatePhysical(AppleGamepadDevice* apple_device, GCController* controller, GCExtendedGamepad* extended_gamepad, GamepadPacket& packet)
 {
@@ -1489,6 +1515,22 @@ static bool SupportsController(GCController* controller, AppleGamepadDevice* dev
 
         return true;
     }
+
+#if TARGET_OS_TV
+    // The Siri Remote: a click (A), Play/Pause (X), the clicks of its clickpad ring as the d-pad and its touch
+    // surface as the left stick. Its Menu button is a key (KEY_BACK).
+    if (controller.microGamepad)
+    {
+        device->m_AxisCount = 6;
+        device->m_HatCount = 1;
+        device->m_ButtonCount = 2;
+        device->m_IsMicroGamepad = 1;
+        device->m_PacketLayout = APPLE_GAMEPAD_PACKET_LAYOUT_SDL;
+        ResetLegacyMapping(device);
+
+        return true;
+    }
+#endif
 
     return false;
 }
@@ -2072,6 +2114,15 @@ static void AppleGamepadDriverUpdate(HContext context, GamepadDriver* driver, Ga
     GCExtendedGamepad* extended_gamepad = controller.extendedGamepad;
     if (extended_gamepad == nil)
     {
+#if TARGET_OS_TV
+        if (apple_device->m_IsMicroGamepad && controller.microGamepad != nil)
+        {
+            gamepad->m_AxisCount = apple_device->m_AxisCount;
+            gamepad->m_ButtonCount = GAMEPAD_MAPPED_BUTTON_COUNT;
+            gamepad->m_HatCount = apple_device->m_HatCount;
+            AppleGamepadDriverUpdateMicro(controller.microGamepad, packet);
+        }
+#endif
         return;
     }
 

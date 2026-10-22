@@ -10,5 +10,7 @@
     "arm64-osx": ["osx", "xcode27_1"],
     "x86_64-osx": ["osx", "xcode27_1"],
     "arm64-ios": ["osx", "xcode27_1"],
-    "arm64_sim-ios": ["osx", "xcode27_1"]
+    "arm64_sim-ios": ["osx", "xcode27_1"],
+    "arm64-tvos": ["osx", "xcode27_1"],
+    "arm64_sim-tvos": ["osx", "xcode27_1"]
 }

@@ -57,6 +57,12 @@ int dmNativeGetKey( int key )
         return NATIVE_PRESS;
     }
 
+    if( dmNativeInput.Key[ key ] == NATIVE_PRESS_UNREAD )
+    {
+        dmNativeInput.Key[ key ] = NATIVE_PRESS;
+        return NATIVE_PRESS;
+    }
+
     return (int) dmNativeInput.Key[ key ];
 }
 

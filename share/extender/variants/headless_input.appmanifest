@@ -49,3 +49,9 @@ platforms:
             excludeLibs: ["record","sound","tremolo","graphics","graphics_metal","hid","platform"]
             excludeSymbols: ["DefaultSoundDevice","AudioDecoderWav","AudioDecoderStbVorbis","AudioDecoderTremolo","GraphicsAdapterOpenGL","GraphicsAdapterVulkan","GraphicsAdapterMetal"]
             symbols: ["NullSoundDevice", "GraphicsAdapterNull"]
+
+    tvos:
+        context:
+            excludeLibs: ["record","sound","tremolo","graphics","graphics_metal","hid","platform"]
+            excludeSymbols: ["DefaultSoundDevice","AudioDecoderWav","AudioDecoderStbVorbis","AudioDecoderTremolo","GraphicsAdapterOpenGL","GraphicsAdapterVulkan","GraphicsAdapterMetal"]
+            symbols: ["NullSoundDevice", "GraphicsAdapterNull"]

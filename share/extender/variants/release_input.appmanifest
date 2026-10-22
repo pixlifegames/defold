@@ -48,3 +48,9 @@ platforms:
             excludeLibs: ["debugger", "engine", "engine_service", "profile", "profilerext", "profiler_remotery"]
             libs: ["engine_release", "engine_service_null", "profile_null", "profilerext_null"]
             excludeSymbols: ['LuaDebugger', 'ProfilerExt', 'ProfilerBasic', 'ProfilerRemotery']
+
+    tvos:
+        context:
+            excludeLibs: ["debugger", "engine", "engine_service", "profile", "profilerext", "profiler_remotery"]
+            libs: ["engine_release", "engine_service_null", "profile_null", "profilerext_null"]
+            excludeSymbols: ['LuaDebugger', 'ProfilerExt', 'ProfilerBasic', 'ProfilerRemotery']

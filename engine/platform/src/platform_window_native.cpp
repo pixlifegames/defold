@@ -520,6 +520,14 @@ namespace dmPlatform
             case WINDOW_DEVICE_STATE_KEYBOARD_RESET:
                 dmNativeResetKeyboard();
                 break;
+#if defined(DM_PLATFORM_TVOS)
+            case WINDOW_DEVICE_STATE_MENU_IS_BACK:
+                dmNativeSetMenuIsBack(op1);
+                break;
+            case WINDOW_DEVICE_STATE_REMOTE_TOUCH:
+                dmNativeSetRemoteTouch(op1);
+                break;
+#endif
             default:break;
         }
     }

@@ -117,3 +117,21 @@ platforms:
             libs: ["physics_2d_defold"]
             frameworks: []
             linkFlags: []
+
+    arm64-tvos:
+        context:
+            excludeLibs: ["physics","LinearMath","BulletDynamics","BulletCollision"]
+            excludeSymbols: []
+            symbols: []
+            libs: ["physics_2d_defold"]
+            frameworks: []
+            linkFlags: []
+
+    arm64_sim-tvos:
+        context:
+            excludeLibs: ["physics","LinearMath","BulletDynamics","BulletCollision"]
+            excludeSymbols: []
+            symbols: []
+            libs: ["physics_2d_defold"]
+            frameworks: []
+            linkFlags: []

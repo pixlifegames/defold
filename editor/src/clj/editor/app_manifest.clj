@@ -32,6 +32,8 @@
 
 (def ios #{:arm64-ios :arm64_sim-ios})
 
+(def tvos #{:arm64-tvos :arm64_sim-tvos})
+
 (def web #{:wasm-web :wasm_pthread-web})
 
 (def linux #{:x86_64-linux :arm64-linux})
@@ -53,6 +55,8 @@
 (def all-platforms
   #{;; ios
     :arm64-ios :arm64_sim-ios
+    ;; tvos
+    :arm64-tvos :arm64_sim-tvos
     ;; android
     :armv7-android :arm64-android :x86_64-android
     ;; osx
@@ -395,6 +399,7 @@
                          (generic-contains-toggles linux :symbols ["ProfilerRemotery"])
                          (generic-contains-toggles android :symbols ["ProfilerRemotery"])
                          (generic-contains-toggles ios :symbols ["ProfilerRemotery"])
+                         (generic-contains-toggles tvos :symbols ["ProfilerRemotery"])
                          (generic-contains-toggles web :symbols ["ProfilerJS"])
                          (libs-toggles all-platforms ["profile", "profilerext"])
                          (libs-toggles windows ["profiler_remotery"])
@@ -402,6 +407,7 @@
                          (libs-toggles linux ["profiler_remotery"])
                          (libs-toggles android ["profiler_remotery"])
                          (libs-toggles ios ["profiler_remotery"])
+                         (libs-toggles tvos ["profiler_remotery"])
                          (libs-toggles web ["profiler_js"]))]
     (make-choice-setting
       :none none-toggles
@@ -807,6 +813,9 @@
     [[:platforms [;; ios
                   [:arm64-ios platform-pattern]
                   [:arm64_sim-ios platform-pattern]
+                  ;; tvos
+                  [:arm64-tvos platform-pattern]
+                  [:arm64_sim-tvos platform-pattern]
                   ;; android
                   [:armv7-android platform-pattern]
                   [:arm64-android platform-pattern]
@@ -845,7 +854,7 @@
                     manifest
                     [:excludeLibs :libs :engineLibs]))
           manifest
-          (into #{:android :ios :web} cat [android ios web])))
+          (into #{:android :ios :tvos :web} cat [android ios tvos web])))
 
 (defn- migrate-macos-vulkan-platform [manifest]
   ;; platform_vulkan replaces the new default platform library. Keep old

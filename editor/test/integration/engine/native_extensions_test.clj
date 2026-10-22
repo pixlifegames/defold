@@ -101,7 +101,23 @@
                    "/extension1/lib/ios/file"
                    "/subdir/extension2/ext.manifest"
                    "/subdir/extension2/src/.gitkeep"}
-                 (platform-resources project "arm64-ios"))))))))
+                 (platform-resources project "arm64-ios"))))))
+    ;; tvOS uses the tvos and arm64-tvos library folders, not the iOS ones.
+    (testing "arm64-tvos"
+      (with-clean-system
+        (let [workspace (test-util/setup-workspace! "test/resources/extension_project")
+              project (test-util/setup-project! workspace)]
+          (is (= #{"/extension1/ext.manifest"
+                   "/extension1/include/file"
+                   "/extension1/include/subdir/file"
+                   "/extension1/src/file"
+                   "/extension1/src/subdir/file"
+                   "/extension1/lib/common/file"
+                   "/extension1/lib/arm64-tvos/file"
+                   "/extension1/lib/tvos/file"
+                   "/subdir/extension2/ext.manifest"
+                   "/subdir/extension2/src/.gitkeep"}
+                 (platform-resources project "arm64-tvos"))))))))
 
 (defn- extender-resource [resources path]
   (some #(when (= path (.getPath ^ExtenderResource %)) %) resources))

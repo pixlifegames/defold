@@ -23,3 +23,19 @@ platforms:
       libs: [graphics_metal]
       frameworks: [Metal, IOSurface, QuartzCore]
       linkFlags: []
+  arm64-tvos:
+    context:
+      excludeLibs: [graphics]
+      excludeSymbols: [GraphicsAdapterOpenGL]
+      symbols: [GraphicsAdapterMetal]
+      libs: [graphics_metal]
+      frameworks: [Metal, IOSurface, QuartzCore]
+      linkFlags: []
+  arm64_sim-tvos:
+    context:
+      excludeLibs: [graphics]
+      excludeSymbols: [GraphicsAdapterOpenGL]
+      symbols: [GraphicsAdapterMetal]
+      libs: [graphics_metal]
+      frameworks: [Metal, IOSurface, QuartzCore]
+      linkFlags: []

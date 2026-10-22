@@ -300,6 +300,13 @@ void dmNativeAndroidUnregisterOnCreateListener(dmNativeoncreatefun fun);
 // Accelerometer control
 void dmNativeAccelerometerEnable();
 
+// tvOS: the remote's Menu press is the back key (NATIVE_KEY_BACK) when on, and goes to tvOS (home) when off (default)
+void dmNativeSetMenuIsBack(int on);
+
+// tvOS: the touches on the remote's touch surface are reported as touches (and the mouse) when on, and go to tvOS when
+// off (default)
+void dmNativeSetRemoteTouch(int on);
+
 // context control
 int   dmNativeQueryAuxContext();
 void* dmNativeAcquireAuxContext();

@@ -48,6 +48,8 @@
 // Internal key and button state/action definitions
 #define NATIVE_STICK 2
 #define NATIVE_CLICKED 3
+// A key press that dmNativeGetKey has not reported yet
+#define NATIVE_PRESS_UNREAD 4
 
 
 //========================================================================

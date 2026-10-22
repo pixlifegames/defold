@@ -29,6 +29,11 @@
 static int                  g_AccelerometerEnabled = 0;
 static double               g_AccelerometerFrequency = 1.0 / 60.0;
 static CMMotionManager*     g_MotionManager = nil;
+#else
+// The only touches on tvOS come from the remote's touch surface. They are not touches on the screen (a thumb resting
+// on the surface would press whatever is under the matching point), so they go on to tvOS unless the game asks for
+// them with dmNativeSetRemoteTouch(1).
+static int                  g_RemoteTouch = 0;
 #endif
 
 // AppDelegate.m
@@ -432,13 +437,26 @@ NSString *const FAKE_STRING = @"Abcd";
     }
 }
 
+// The touches that began are followed to their end (fillTouch skips the others), also when the remote's touches are
+// turned off in between on tvOS.
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
+#if TARGET_OS_TV
+    if (!g_RemoteTouch) {
+        [super touchesMoved: touches withEvent: event];
+    }
+#endif
     [self fillTouch: event forPhase: UITouchPhaseMoved];
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
+#if TARGET_OS_TV
+    if (!g_RemoteTouch) {
+        [super touchesBegan: touches withEvent: event];
+        return;
+    }
+#endif
     if (self.keyboardActive && self.autoCloseKeyboard) {
         // Implicitly hide keyboard
         dmNativeShowKeyboard(0, 0, 0);
@@ -449,11 +467,21 @@ NSString *const FAKE_STRING = @"Abcd";
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
+#if TARGET_OS_TV
+    if (!g_RemoteTouch) {
+        [super touchesEnded: touches withEvent: event];
+    }
+#endif
     [self fillTouch: event forPhase: UITouchPhaseEnded];
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {
+#if TARGET_OS_TV
+    if (!g_RemoteTouch) {
+        [super touchesCancelled: touches withEvent: event];
+    }
+#endif
     [self fillTouch: event forPhase: UITouchPhaseCancelled];
 }
 
@@ -633,6 +661,11 @@ int dmNativeOSGetAcceleration(float* x, float* y, float* z)
 
 void dmNativeAccelerometerEnable()
 {
+}
+
+void dmNativeSetRemoteTouch(int on)
+{
+    g_RemoteTouch = on;
 }
 #else
 int dmNativeOSGetAcceleration(float* x, float* y, float* z)

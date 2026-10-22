@@ -24,6 +24,33 @@ extern int g_IsReboot;
 extern UIWindow* g_ApplicationWindow;
 static int g_view_type = NATIVE_NO_API;
 
+#if TARGET_OS_TV
+// Menu on the remote: tvOS goes home on it (as Apple asks of an app's first screen) unless the app handles it.
+// With dmNativeSetMenuIsBack(1) it is the back key instead.
+static int              g_MenuIsBack = 0;
+// The presses handled as keys, so that their end is handled the same way as their start
+static NSMutableSet*    g_KeyPresses = nil;
+
+static int GetPressKey(UIPress* press)
+{
+    switch (press.type)
+    {
+        case UIPressTypeUpArrow:    return NATIVE_KEY_UP;
+        case UIPressTypeDownArrow:  return NATIVE_KEY_DOWN;
+        case UIPressTypeLeftArrow:  return NATIVE_KEY_LEFT;
+        case UIPressTypeRightArrow: return NATIVE_KEY_RIGHT;
+        case UIPressTypeSelect:     return NATIVE_KEY_ENTER;
+        case UIPressTypeMenu:       return g_MenuIsBack ? NATIVE_KEY_BACK : -1;
+        default:                    return -1;
+    }
+}
+
+void dmNativeSetMenuIsBack(int on)
+{
+    g_MenuIsBack = on;
+}
+#endif
+
 @implementation ViewController
 
 @synthesize baseView;
@@ -205,6 +232,69 @@ static int g_view_type = NATIVE_NO_API;
 #if !TARGET_OS_TV
 - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures {
     return UIRectEdgeAll;
+}
+#else
+// The remote's buttons (the Siri Remote, and a TV's own remote over HDMI-CEC or IR, which reaches tvOS only
+// as presses) are keys. Presses that are not keys go on to tvOS.
+- (void)pressesBegan:(NSSet<UIPress*>*)presses withEvent:(UIPressesEvent*)event
+{
+    if (!g_KeyPresses)
+    {
+        g_KeyPresses = [[NSMutableSet alloc] init];
+    }
+    NSMutableSet* other = [NSMutableSet set];
+    for (UIPress* press in presses)
+    {
+        int key = GetPressKey(press);
+        if (key < 0)
+        {
+            [other addObject:press];
+            continue;
+        }
+        [g_KeyPresses addObject:press];
+        dmNativeInputKey(key, NATIVE_PRESS);
+    }
+    if ([other count] > 0)
+    {
+        [super pressesBegan:other withEvent:event];
+    }
+}
+
+- (void)endPresses:(NSSet<UIPress*>*)presses withEvent:(UIPressesEvent*)event cancelled:(BOOL)cancelled
+{
+    NSMutableSet* other = [NSMutableSet set];
+    for (UIPress* press in presses)
+    {
+        if (![g_KeyPresses containsObject:press])
+        {
+            [other addObject:press];
+            continue;
+        }
+        [g_KeyPresses removeObject:press];
+        int key = GetPressKey(press);
+        if (key < 0 && press.type == UIPressTypeMenu)
+        {
+            key = NATIVE_KEY_BACK; // Menu was made the back key while it was held
+        }
+        dmNativeInputKey(key, NATIVE_RELEASE);
+    }
+    if ([other count] > 0)
+    {
+        if (cancelled)
+            [super pressesCancelled:other withEvent:event];
+        else
+            [super pressesEnded:other withEvent:event];
+    }
+}
+
+- (void)pressesEnded:(NSSet<UIPress*>*)presses withEvent:(UIPressesEvent*)event
+{
+    [self endPresses:presses withEvent:event cancelled:NO];
+}
+
+- (void)pressesCancelled:(NSSet<UIPress*>*)presses withEvent:(UIPressesEvent*)event
+{
+    [self endPresses:presses withEvent:event cancelled:YES];
 }
 #endif
 

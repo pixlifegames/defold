@@ -184,13 +184,20 @@ namespace dmSys
         return GetApplicationSupportPath(application_name, path, path_len);
     }
 
+#if defined(DM_PLATFORM_TVOS)
+    // tvOS applications can only write files to the caches directory
+    static const NSSearchPathDirectory APPLICATION_SUPPORT_DIRECTORY = NSCachesDirectory;
+#else
+    static const NSSearchPathDirectory APPLICATION_SUPPORT_DIRECTORY = NSApplicationSupportDirectory;
+#endif
+
     Result GetApplicationSupportPath(const char* application_name, char* path, uint32_t path_len)
     {
         @autoreleasepool
         {
             assert(path_len > 0);
             NSFileManager* shared_fm = [NSFileManager defaultManager];
-            NSArray* urls = [shared_fm URLsForDirectory:NSApplicationSupportDirectory
+            NSArray* urls = [shared_fm URLsForDirectory:APPLICATION_SUPPORT_DIRECTORY
                                               inDomains:NSUserDomainMask];
 
             if ([urls count] > 0)
@@ -219,11 +226,71 @@ namespace dmSys
             }
             else
             {
-                dmLogError("Unable to locate NSApplicationSupportDirectory");
+                dmLogError("Unable to locate the application support directory");
                 return RESULT_UNKNOWN;
             }
         }
     }
+
+#if defined(DM_PLATFORM_TVOS)
+    static NSString* GetPersistentDataKey(const char* path)
+    {
+        NSString* ns_path = [NSString stringWithUTF8String: path];
+        NSArray* urls = [[NSFileManager defaultManager] URLsForDirectory:APPLICATION_SUPPORT_DIRECTORY
+                                                               inDomains:NSUserDomainMask];
+        if ([urls count] > 0)
+        {
+            NSString* root = [[[urls objectAtIndex:0] path] stringByAppendingString:@"/"];
+            if ([ns_path hasPrefix: root])
+            {
+                ns_path = [ns_path substringFromIndex: [root length]];
+            }
+        }
+        return [@"defold.persistent_data:" stringByAppendingString: ns_path];
+    }
+
+    Result GetPersistentDataSize(const char* path, uint32_t* size)
+    {
+        @autoreleasepool
+        {
+            NSData* data = [[NSUserDefaults standardUserDefaults] dataForKey: GetPersistentDataKey(path)];
+            if (data == nil)
+            {
+                return RESULT_NOENT;
+            }
+            *size = (uint32_t)[data length];
+            return RESULT_OK;
+        }
+    }
+
+    Result ReadPersistentData(const char* path, void* buffer, uint32_t buffer_size)
+    {
+        @autoreleasepool
+        {
+            NSData* data = [[NSUserDefaults standardUserDefaults] dataForKey: GetPersistentDataKey(path)];
+            if (data == nil)
+            {
+                return RESULT_NOENT;
+            }
+            if ([data length] > buffer_size)
+            {
+                return RESULT_INVAL;
+            }
+            [data getBytes: buffer length: [data length]];
+            return RESULT_OK;
+        }
+    }
+
+    Result WritePersistentData(const char* path, const void* data, uint32_t size)
+    {
+        @autoreleasepool
+        {
+            NSData* ns_data = [NSData dataWithBytes: data length: size];
+            [[NSUserDefaults standardUserDefaults] setObject: ns_data forKey: GetPersistentDataKey(path)];
+            return RESULT_OK;
+        }
+    }
+#endif
 
 #if defined(DM_PLATFORM_IOS)
 

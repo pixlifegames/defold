@@ -475,7 +475,9 @@ public class BundlerTest {
         createFile(outputContentRoot, "builtins/manifests/web/dark_theme.css", "");
         createFile(outputContentRoot, "builtins/manifests/osx/Info.plist", "");
         // Platform keys rewritten by simulator bundling and the required scene manifest.
+        // Without the DOCTYPE the plist parser reads the indentation as text and loses the nested dictionaries.
         String IOS_INFO_PLIST = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
                 + "<plist version=\"1.0\">\n"
                 + "<dict>\n"
                 + "        <key>UIApplicationSceneManifest</key>\n"

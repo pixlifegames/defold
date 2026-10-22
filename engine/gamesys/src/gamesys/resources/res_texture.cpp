@@ -332,6 +332,12 @@ namespace dmGameSystem
             {
                 if (image_desc->m_DecompressedData[i] == 0)
                 {
+                    // resource.create_texture() may get data for fewer levels than the texture has (e.g. only the base
+                    // level, and the others come later with resource.set_texture()). Only the levels in the data are uploaded.
+                    if (image->m_DataSize > 0 && image->m_MipMapOffset[i] >= image->m_DataSize)
+                    {
+                        break;
+                    }
                     params.m_Data     = &image_data_alternative[image->m_MipMapOffset[i]];
                     params.m_DataSize = image->m_MipMapSize[i];
                 }

@@ -118,6 +118,27 @@ function test_success_mipmap()
     end
 end
 
+-- A texture with mipmaps created from a buffer with only the base level: the other levels come later with
+-- set_texture, and creating the texture must not read them from the buffer
+local function test_success_mipmap_base_level(self)
+    local tparams = {
+        width       = 32,
+        height      = 32,
+        type        = graphics.TEXTURE_TYPE_2D,
+        format      = graphics.TEXTURE_FORMAT_RGBA,
+        max_mipmaps = 6,
+    }
+    local base_buffer = buffer.create(tparams.width * tparams.height, {{name = hash("data"), type = buffer.VALUE_TYPE_UINT8, count = 4 }})
+    local t_id = resource.create_texture("/test_mipmap_base_level.texturec", tparams, base_buffer)
+
+    local width, height = tparams.width, tparams.height
+    for i=1,5 do
+        width, height = width / 2, height / 2
+        local mm_buffer = buffer.create(width * height, {{name = hash("data"), type = buffer.VALUE_TYPE_UINT8, count = 4 }})
+        resource.set_texture(t_id, { width = width, height = height, mipmap = i, type = tparams.type, format = tparams.format }, mm_buffer)
+    end
+end
+
 local function test_slice_array()
     local t_param = {
         width          = 32,
@@ -169,6 +190,7 @@ function update(self, dt)
         test_fail_wrong_mipmap,
         test_success_compressed,
         test_success_mipmap,
+        test_success_mipmap_base_level,
         test_slice_array,
         test_slice_idx_out_of_layer_count
     }

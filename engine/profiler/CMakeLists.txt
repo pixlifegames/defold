@@ -36,7 +36,7 @@ set(PROFILER_SOURCES
   "${PROFILER_SRC_DIR}/profiler_render.cpp"
   "${PROFILER_SRC_DIR}/basic/profiler_basic.cpp")
 
-if(TARGET_PLATFORM MATCHES "macos|ios")
+if(TARGET_PLATFORM MATCHES "macos|ios|tvos")
   list(APPEND PROFILER_SOURCES "${PROFILER_SRC_DIR}/profiler_cocoa.mm")
 elseif(TARGET_PLATFORM MATCHES "android")
   list(APPEND PROFILER_SOURCES

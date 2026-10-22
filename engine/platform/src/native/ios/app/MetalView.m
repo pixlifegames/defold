@@ -34,7 +34,7 @@ static CGSize GetDrawableSize(MetalView* view)
     if (view_bounds.size.width <= 0.0f || view_bounds.size.height <= 0.0f)
     {
         view_bounds = g_ApplicationWindow.bounds;
-        scale_factor = g_ApplicationWindow.screen.scale;
+        scale_factor = dmNativeGetContentScale(g_ApplicationWindow.screen);
     }
 
     return CGSizeMake(view_bounds.size.width * scale_factor, view_bounds.size.height * scale_factor);
@@ -73,7 +73,7 @@ static void UpdateWindowSize(MetalView* view, BOOL notify)
 
 + (BaseView*)createView:(CGRect)bounds recreate:(BOOL)recreate
 {
-    CGFloat scaleFactor = g_ApplicationWindow.screen.scale;
+    CGFloat scaleFactor = dmNativeGetContentScale(g_ApplicationWindow.screen);
     g_MetalView = [[[MetalView alloc] initWithFrame: bounds] autorelease];
     g_MetalView.contentScaleFactor = scaleFactor;
     g_MetalView.layer.contentsScale = scaleFactor;
@@ -126,6 +126,10 @@ int  dmNativeOSOpenWindowVulkan( int width, int height,
                               const Nativewndconfig *wndconfig,
                               const Nativefbconfig *fbconfig )
 {
+    // The view exists before the window opens, so its scale follows high_dpi from here
+    dmNativeWin.highDPI = wndconfig->highDPI;
+    g_MetalView.contentScaleFactor = dmNativeGetContentScale(g_ApplicationWindow.screen);
+    g_MetalView.layer.contentsScale = g_MetalView.contentScaleFactor;
     UpdateWindowSize(g_MetalView, NO);
 
     dmNativeWin.portrait = height > width ? GL_TRUE : GL_FALSE;

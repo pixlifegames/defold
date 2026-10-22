@@ -59,3 +59,6 @@
 - (void) setWindowHeight:(int)height;
 
 @end
+
+// The scale of the views' contents on the screen (see dmNativeWin.highDPI)
+CGFloat dmNativeGetContentScale(UIScreen* screen);

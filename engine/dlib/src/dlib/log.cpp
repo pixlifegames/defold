@@ -321,8 +321,8 @@ void DoLogPlatform(LogSeverity severity, const char* output, int output_len)
 #ifdef ANDROID
     __android_log_print(dmLog::ToAndroidPriority(severity), "defold", "%s", output);
 
-// iOS
-#elif TARGET_OS_IOS==1
+// iOS and tvOS
+#elif TARGET_OS_IOS==1 || TARGET_OS_TV==1
     dmLog::__ios_log_print(severity, output);
 #endif
 

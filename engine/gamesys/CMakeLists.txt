@@ -191,7 +191,7 @@ list(FILTER GS_SOURCES EXCLUDE REGEX "/script_model\\.cpp$")
 list(FILTER GS_SOURCES EXCLUDE REGEX "/scripts/box2d/")
 
 # Choose platform-specific window script
-if (TARGET_PLATFORM MATCHES "arm64-ios|arm64_sim-ios")
+if (TARGET_PLATFORM MATCHES "arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos")
     list(APPEND GS_SOURCES "${GS_SRC_DIR}/scripts/window/script_window_ios.mm")
 elseif (TARGET_PLATFORM MATCHES "armv7-android|arm64-android|x86_64-android")
     list(APPEND GS_SOURCES "${GS_SRC_DIR}/scripts/window/script_window_android.cpp")

@@ -136,11 +136,11 @@ set(ENGINE_SHADER_OUTPUT_ARGS)
 # can select later even if they are not in the default engine symbol set.
 if("GraphicsAdapterOpenGL" IN_LIST ENGINE_GRAPHICS_SYMBOLS
     OR "GraphicsAdapterOpenGLES" IN_LIST ENGINE_GRAPHICS_SYMBOLS
-    OR TARGET_PLATFORM MATCHES "^(x86_64-macos|arm64-macos|arm64-ios|arm64_sim-ios)$")
+    OR TARGET_PLATFORM MATCHES "^(x86_64-macos|arm64-macos|arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos)$")
   list(APPEND ENGINE_SHADER_OUTPUT_ARGS --shader-output glsl)
 endif()
 if("GraphicsAdapterVulkan" IN_LIST ENGINE_GRAPHICS_SYMBOLS
-    OR TARGET_PLATFORM MATCHES "^(x86_64-macos|arm64-macos|arm64-ios|arm64_sim-ios|x86_64-win32|x86_64-linux|arm64-linux|armv7-android|arm64-android|x86_64-android)$")
+    OR TARGET_PLATFORM MATCHES "^(x86_64-macos|arm64-macos|arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos|x86_64-win32|x86_64-linux|arm64-linux|armv7-android|arm64-android|x86_64-android)$")
   list(APPEND ENGINE_SHADER_OUTPUT_ARGS --shader-output spirv)
 endif()
 # App manifests can relink web engines to WebGPU even when the default
@@ -154,7 +154,7 @@ if("GraphicsAdapterDX12" IN_LIST ENGINE_GRAPHICS_SYMBOLS
   list(APPEND ENGINE_SHADER_OUTPUT_ARGS --shader-output hlsl)
 endif()
 if("GraphicsAdapterMetal" IN_LIST ENGINE_GRAPHICS_SYMBOLS
-    OR TARGET_PLATFORM MATCHES "^(x86_64-macos|arm64-macos|arm64-ios|arm64_sim-ios)$")
+    OR TARGET_PLATFORM MATCHES "^(x86_64-macos|arm64-macos|arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos)$")
   list(APPEND ENGINE_SHADER_OUTPUT_ARGS --shader-output msl)
 endif()
 add_custom_command(
@@ -247,7 +247,7 @@ set(ENGINE_EMBED_CPP
 set(ENGINE_SERVICE_SOURCES
   "${ENGINE_SRC_DIR}/engine_service.cpp"
   "${ENGINE_SRC_DIR}/engine_service_discovery.cpp")
-if(TARGET_PLATFORM MATCHES "ios")
+if(TARGET_PLATFORM MATCHES "(ios|tvos)$")
   list(APPEND ENGINE_SERVICE_SOURCES "${ENGINE_SRC_DIR}/engine_service_discovery_ios.mm")
 endif()
 
@@ -488,7 +488,7 @@ function(engine_configure_executable target variant engine_lib engine_service_li
     endif()
   elseif(TARGET_PLATFORM MATCHES "macos")
     target_link_libraries(${target} PRIVATE "-framework AVFoundation" "-framework GameController")
-  elseif(TARGET_PLATFORM MATCHES "ios")
+  elseif(TARGET_PLATFORM MATCHES "(ios|tvos)$")
     target_link_libraries(${target} PRIVATE "-framework AVFoundation" "-framework UIKit" "-framework OpenGLES" "-framework QuartzCore" "-framework CoreGraphics")
   endif()
 endfunction()

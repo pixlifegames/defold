@@ -23,6 +23,7 @@ id<UIApplicationDelegate> g_AppDelegates[MAX_APP_DELEGATES];
 int g_AppDelegatesCount = 0;
 AppDelegate* g_ApplicationDelegate = 0;
 
+#if !TARGET_OS_TV
 UIInterfaceOrientationMask dmNativeGetiOSLegacyInterfaceOrientations(UIWindow* window)
 {
     // Legacy delegates may query the root controller's policy. Resolve nested
@@ -46,6 +47,7 @@ UIInterfaceOrientationMask dmNativeGetiOSLegacyInterfaceOrientations(UIWindow* w
     querying = NO;
     return mask;
 }
+#endif
 
 @implementation AppDelegateProxy
 
@@ -85,11 +87,13 @@ UIInterfaceOrientationMask dmNativeGetiOSLegacyInterfaceOrientations(UIWindow* w
     return [g_ApplicationDelegate application:application configurationForConnectingSceneSession:session options:options];
 }
 
+#if !TARGET_OS_TV
 - (UIInterfaceOrientationMask)application:(UIApplication*)application supportedInterfaceOrientationsForWindow:(UIWindow*)window
 {
     // Keep the app-wide policy active while UIKit queries a full-screen modal.
     return dmNativeGetiOSSupportedInterfaceOrientations(window);
 }
+#endif
 
 - (void)forwardInvocation:(NSInvocation *)anInvocation {
     BOOL invoked = NO;

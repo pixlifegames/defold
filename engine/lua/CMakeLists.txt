@@ -13,7 +13,7 @@ file(GLOB_RECURSE LUA_DMSDK_HEADERS CONFIGURE_DEPENDS
   "${LUA_SRC_DIR}/dmsdk/*.hpp")
 
 set(LUA_DEFINES LUA_ANSI DM_LUA_USE_LUA51)
-if(TARGET_PLATFORM MATCHES "arm64-ios|arm64_sim-ios")
+if(TARGET_PLATFORM MATCHES "arm64-ios|arm64_sim-ios|arm64-tvos|arm64_sim-tvos")
   list(APPEND LUA_DEFINES LUA_NO_SYSTEM)
 endif()
 

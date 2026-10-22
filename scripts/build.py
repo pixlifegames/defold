@@ -38,6 +38,7 @@ BASE_PLATFORMS = [  'x86_64-linux', 'arm64-linux',
                     'x86_64-macos', 'arm64-macos',
                     'x86_64-win32',
                     'arm64-ios', 'arm64_sim-ios',
+                    'arm64-tvos', 'arm64_sim-tvos',
                     'armv7-android', 'arm64-android', 'x86_64-android',
                     'wasm-web', 'wasm_pthread-web']
 
@@ -173,6 +174,12 @@ PACKAGES_HOST=[
 PACKAGES_IOS_SIMULATOR=[
     "tremolo-b0cb4d1"]
 
+PACKAGES_TVOS_SIMULATOR=[
+    "tremolo-b0cb4d1"]
+
+PACKAGES_TVOS=[
+    "tremolo-b0cb4d1"]
+
 PACKAGES_IOS_64=[
     "tremolo-b0cb4d1",
     "moltenvk-1474891"]
@@ -285,6 +292,8 @@ PLATFORM_PACKAGES = {
     'arm64-macos':      PACKAGES_MACOS_ARM64,
     'arm64-ios':        PACKAGES_IOS_64,
     'arm64_sim-ios':    PACKAGES_IOS_SIMULATOR,
+    'arm64-tvos':       PACKAGES_TVOS,
+    'arm64_sim-tvos':   PACKAGES_TVOS_SIMULATOR,
     'armv7-android':    PACKAGES_ANDROID,
     'arm64-android':    PACKAGES_ANDROID_64,
     'x86_64-android':   PACKAGES_ANDROID_X86_64,
@@ -376,7 +385,7 @@ def format_exes(name, platform):
 def format_lib(name, platform):
     prefix = 'lib'
     suffix = ''
-    if 'macos' in platform or 'ios' in platform:
+    if 'macos' in platform or 'ios' in platform or 'tvos' in platform:
         suffix = '.dylib'
     elif 'win32' in platform:
         prefix = ''
@@ -1169,7 +1178,7 @@ class Configuration(object):
         if sdk.get_host_platform() != target_platform:
             has_host_sdk = self.has_sdk(sdkfolder, sdk.get_host_platform())
 
-        if target_platform in ('x86_64-macos', 'arm64-macos', 'arm64-ios', 'arm64_sim-ios'):
+        if target_platform in ('x86_64-macos', 'arm64-macos', 'arm64-ios', 'arm64_sim-ios', 'arm64-tvos', 'arm64_sim-tvos'):
             # macOS SDK
             download_sdk(self,'%s/%s.tar.gz' % (self.package_path, sdk.PACKAGES_MACOS_SDK), join(sdkfolder, sdk.PACKAGES_MACOS_SDK))
             download_sdk(self,'%s/%s.darwin.tar.gz' % (self.package_path, sdk.PACKAGES_XCODE_TOOLCHAIN), sdkfolder, force_extract=True)
@@ -1178,6 +1187,11 @@ class Configuration(object):
             # iOS SDK
             download_sdk(self,'%s/%s.tar.gz' % (self.package_path, sdk.PACKAGES_IOS_SDK), join(sdkfolder, sdk.PACKAGES_IOS_SDK))
             download_sdk(self,'%s/%s.tar.gz' % (self.package_path, sdk.PACKAGES_IOS_SIMULATOR_SDK), join(sdkfolder, sdk.PACKAGES_IOS_SIMULATOR_SDK))
+
+        if target_platform in ('arm64-tvos', 'arm64_sim-tvos'):
+            # tvOS SDK
+            download_sdk(self,'%s/%s.tar.gz' % (self.package_path, sdk.PACKAGES_TVOS_SDK), join(sdkfolder, sdk.PACKAGES_TVOS_SDK))
+            download_sdk(self,'%s/%s.tar.gz' % (self.package_path, sdk.PACKAGES_TVOS_SIMULATOR_SDK), join(sdkfolder, sdk.PACKAGES_TVOS_SIMULATOR_SDK))
 
         if 'win32' in target_platform or ('win32' in self.host and not has_host_sdk):
             if self.package_path is None:
@@ -1577,7 +1591,7 @@ class Configuration(object):
 
     def _strip_engine(self, path):
         """ Strips the debug symbols from an executable """
-        if self.target_platform not in ['x86_64-linux','arm64-linux','x86_64-macos','arm64-macos','arm64-ios','arm64_sim-ios','armv7-android','arm64-android','x86_64-android']:
+        if self.target_platform not in ['x86_64-linux','arm64-linux','x86_64-macos','arm64-macos','arm64-ios','arm64_sim-ios','arm64-tvos','arm64_sim-tvos','armv7-android','arm64-android','x86_64-android']:
             return False
 
         sdkfolder = join(self.ext, 'SDKs')
@@ -1663,7 +1677,7 @@ class Configuration(object):
                     engine_dwarf = join(bin_dir, engine_name + '.debug.wasm')
                     if os.path.exists(engine_dwarf):
                         self.upload_to_archive(engine_dwarf, '%s/%s.debug.wasm' % (full_archive_path, engine_name))
-                elif 'macos' in self.target_platform or 'ios' in self.target_platform:
+                elif 'macos' in self.target_platform or 'ios' in self.target_platform or 'tvos' in self.target_platform:
                     engine_symbols = join(bin_dir, engine_name + '.dSYM.zip')
                     if os.path.exists(engine_symbols):
                         self.upload_to_archive(engine_symbols, '%s/%s' % (full_archive_path, os.path.basename(engine_symbols)))
@@ -3291,7 +3305,7 @@ class Configuration(object):
         # which are absent from the public manifest.
         private_excludes = re.compile(
             r'(^|/)editor(2)*/|/defoldsdk\.zip$|/launcher(\.exe)*$'
-            r'|/(armv7-android|wasm_pthread-web|x86_64-android|arm64_sim-ios)(/|$)|headless'
+            r'|/(armv7-android|wasm_pthread-web|x86_64-android|arm64_sim-ios|arm64_sim-tvos)(/|$)|headless'
             r'|/arm64-linux/(stripped/)?(lib)?dmengine[^/]*$'
         )
         prefix = s3.get_archive_prefix(self.get_archive_path(), sha1).replace('\\', '/').rstrip('/') + '/'

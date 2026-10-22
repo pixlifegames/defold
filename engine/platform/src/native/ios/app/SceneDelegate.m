@@ -35,6 +35,8 @@ static NSArray* GetSceneDelegates(void)
     return [NSArray arrayWithObjects:g_SceneDelegates count:g_SceneDelegateCount];
 }
 
+// tvOS has no interface orientations
+#if !TARGET_OS_TV
 static UIInterfaceOrientationMask GetOrientationMask(NSArray* orientations)
 {
     UIInterfaceOrientationMask mask = 0;
@@ -82,6 +84,7 @@ UIInterfaceOrientationMask dmNativeGetiOSSupportedInterfaceOrientations(UIWindow
         return legacyMask;
     return dmNativeGetiOSDefaultInterfaceOrientations([NSBundle mainBundle].infoDictionary, [UIDevice currentDevice].userInterfaceIdiom);
 }
+#endif
 
 static void SetSceneActive(BOOL active)
 {
@@ -102,10 +105,12 @@ int dmNativeOSIsSceneActive(void)
 @synthesize window;
 @synthesize launchScreenView;
 
+#if !TARGET_OS_TV
 - (UIInterfaceOrientationMask)supportedInterfaceOrientationsForWindowScene:(UIWindowScene*)scene
 {
     return dmNativeGetiOSSupportedInterfaceOrientations(self.window);
 }
+#endif
 
 - (void)removeLaunchScreen
 {

@@ -108,6 +108,7 @@ public class EngineArtifactsProviderTest {
     public void testNativeEnginesUseStrippedArtifactsAndReuseCache() throws Exception {
         Platform[] platforms = {Platform.Arm64Linux, Platform.Arm64IosSim, Platform.X86_64Android,
                 Platform.Armv7Android, Platform.Arm64Android, Platform.Arm64Ios,
+                Platform.Arm64TvOS, Platform.Arm64TvOSSim,
                 Platform.X86_64Linux, Platform.X86_64MacOS, Platform.Arm64MacOS};
         for (Platform platform : platforms) {
             checkEngineDownloads(platform, "stripped/");

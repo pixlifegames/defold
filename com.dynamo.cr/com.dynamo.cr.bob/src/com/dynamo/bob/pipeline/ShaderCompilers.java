@@ -76,7 +76,7 @@ public class ShaderCompilers {
 
     private static LinkedHashSet<GraphicsAdapter> getDefaultShaderAdapters(Platform platform) {
         LinkedHashSet<GraphicsAdapter> adapters = new LinkedHashSet<>();
-        if (platform.isMacOS() || platform == Platform.Arm64IosSim) {
+        if (platform.isMacOS() || platform == Platform.Arm64IosSim || platform.matchesOS(OS.OS_ID_TVOS)) {
             adapters.add(GraphicsAdapter.METAL);
         } else if (platform.matchesOS(OS.OS_ID_ANDROID)) {
             adapters.add(GraphicsAdapter.VULKAN);
@@ -95,7 +95,8 @@ public class ShaderCompilers {
 
     private static Set<GraphicsAdapter> getShaderAdaptersFromOptions(Platform platform, IShaderCompiler.CompileOptions compileOptions) {
         LinkedHashSet<GraphicsAdapter> adapters = new LinkedHashSet<>();
-        if (platform == Platform.Arm64IosSim || compileOptions.shaderAdapters == null) {
+        // The iOS simulator and tvOS have only Metal
+        if (platform == Platform.Arm64IosSim || platform.matchesOS(OS.OS_ID_TVOS) || compileOptions.shaderAdapters == null) {
             return getDefaultShaderAdapters(platform);
         }
         for (String adapterName : compileOptions.shaderAdapters.split(",")) {
@@ -227,7 +228,7 @@ public class ShaderCompilers {
                         }
                     }
                     case METAL -> {
-                        if (platform.isMacOS() || platform.matchesOS(OS.OS_ID_IOS)) {
+                        if (platform.isMacOS() || platform.matchesOS(OS.OS_ID_IOS) || platform.matchesOS(OS.OS_ID_TVOS)) {
                             shaderLanguages.add(ShaderDesc.Language.LANGUAGE_MSL_22);
                         }
                     }

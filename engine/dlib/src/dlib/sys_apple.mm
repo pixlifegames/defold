@@ -312,7 +312,11 @@ namespace dmSys
 
         dmStrlCpy(info->m_Manufacturer, "Apple", sizeof(info->m_Manufacturer));
         dmStrlCpy(info->m_DeviceModel, uts.machine, sizeof(info->m_DeviceModel));
+#if defined(DM_PLATFORM_TVOS)
+        dmStrlCpy(info->m_SystemName, "tvOS", sizeof(info->m_SystemName));
+#else
         dmStrlCpy(info->m_SystemName, "iPhone OS", sizeof(info->m_SystemName));
+#endif
         dmStrlCpy(info->m_SystemVersion, [d.systemVersion UTF8String], sizeof(info->m_SystemVersion));
         dmStrlCpy(info->m_ApiVersion, [d.systemVersion UTF8String], sizeof(info->m_ApiVersion));
 

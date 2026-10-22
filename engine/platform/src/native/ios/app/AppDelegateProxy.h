@@ -14,8 +14,10 @@
 
 #import <UIKit/UIKit.h>
 
+#if !TARGET_OS_TV
 // Returns the last valid legacy orientation override, or zero.
 FOUNDATION_EXPORT UIInterfaceOrientationMask dmNativeGetiOSLegacyInterfaceOrientations(UIWindow* window);
+#endif
 
 @interface AppDelegateProxy: NSObject <UIApplicationDelegate>
 

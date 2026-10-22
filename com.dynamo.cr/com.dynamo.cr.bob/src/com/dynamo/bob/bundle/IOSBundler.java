@@ -189,7 +189,9 @@ public class IOSBundler implements IBundler {
 
         properties.put("url-schemes", urlSchemes);
         properties.put("application-queries-schemes", applicationQueriesSchemes);
-        properties.put("bundle-name", projectProperties.getStringValue("ios", "bundle_name", derivedBundleName(title)));
+        // bundle_name is empty by default, and then the name comes from the title
+        String bundleName = projectProperties.getStringValue("ios", "bundle_name", "");
+        properties.put("bundle-name", bundleName.isEmpty() ? derivedBundleName(title) : bundleName);
         properties.put("bundle-version", projectProperties.getStringValue("ios", "bundle_version",
             projectProperties.getStringValue("project", "version", "1.0")
         ));

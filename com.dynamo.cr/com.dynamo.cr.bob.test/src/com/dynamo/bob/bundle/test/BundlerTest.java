@@ -171,6 +171,9 @@ public class BundlerTest {
                 contents.contains(String.format("<string>%s</string>", expectedPlatformName)));
         assertTrue(String.format("%s should declare a %s DTSDKName", manifest, expectedPlatformName),
                 contents.contains(String.format("<string>%s", expectedPlatformName)));
+        // bundle_name is not set, so CFBundleName comes from the title
+        assertTrue(String.format("%s should declare the CFBundleName unnamed", manifest),
+                contents.contains("<key>CFBundleName</key>") && contents.contains("<string>unnamed</string>"));
     }
 
     // Used to check if the built and bundled test projects all contain the correct engine binaries.
@@ -490,6 +493,8 @@ public class BundlerTest {
                 + "        <string>iphoneos</string>\n"
                 + "        <key>DTSDKName</key>\n"
                 + "        <string>iphoneos18.0</string>\n"
+                + "        <key>CFBundleName</key>\n"
+                + "        <string>{{bundle-name}}</string>\n"
                 + "</dict>\n"
                 + "</plist>\n";
         createFile(outputContentRoot, "builtins/manifests/ios/Info.plist", IOS_INFO_PLIST);

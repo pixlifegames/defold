@@ -14,6 +14,8 @@
 
 package com.dynamo.bob.bundle.test;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import org.junit.Test;
 import com.dynamo.bob.bundle.IOSBundler;
@@ -60,5 +62,13 @@ public class IOSBundlerTest {
     @Test(expected = IOException.class)
     public void rejectsSceneStoryboard() throws IOException {
         IOSBundler.validateSceneManifest(scene("<key>UISceneStoryboardFile</key><string>Main</string>"));
+    }
+
+    // Wildcard provisioning profiles must not put the wildcard in the signature, or devices refuse to install the app.
+    @Test
+    public void resolvesWildcardApplicationIdentifier() {
+        assertEquals("TEAMID.com.example.game", IOSBundler.resolveApplicationIdentifier("TEAMID.*", "com.example.game"));
+        assertEquals("TEAMID.com.example.game", IOSBundler.resolveApplicationIdentifier("TEAMID.com.example.*", "com.example.game"));
+        assertEquals("TEAMID.com.example.game", IOSBundler.resolveApplicationIdentifier("TEAMID.com.example.game", "com.example.other"));
     }
 }

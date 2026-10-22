@@ -55,6 +55,10 @@
                                      :library-paths #{"ios" "arm64-ios"}}
    (.getPair Platform/Arm64IosSim)  {:platform      "arm64_sim-ios"
                                      :library-paths #{"ios" "arm64_sim-ios"}}
+   (.getPair Platform/Arm64TvOS)    {:platform      "arm64-tvos"
+                                     :library-paths #{"tvos" "arm64-tvos"}}
+   (.getPair Platform/Arm64TvOSSim) {:platform      "arm64_sim-tvos"
+                                     :library-paths #{"tvos" "arm64_sim-tvos"}}
    (.getPair Platform/Armv7Android) {:platform      "armv7-android"
                                      :library-paths #{"android" "armv7-android"}}
    (.getPair Platform/Arm64Android) {:platform      "arm64-android"
@@ -238,6 +242,8 @@
     "x86_64-android"   ["android" "manifest"]
     "arm64-ios"        ["ios" "infoplist"]
     "arm64_sim-ios"    ["ios" "infoplist"]
+    "arm64-tvos"       ["tvos" "infoplist"]
+    "arm64_sim-tvos"   ["tvos" "infoplist"]
     "arm64-osx"        ["osx" "infoplist"]
     "x86_64-osx"       ["osx" "infoplist"]
     "wasm-web"         ["html5" "htmlfile"]
@@ -250,6 +256,8 @@
     "x86_64-android"   "AndroidManifest.xml"
     "arm64-ios"        "Info.plist"
     "arm64_sim-ios"    "Info.plist"
+    "arm64-tvos"       "Info.plist"
+    "arm64_sim-tvos"   "Info.plist"
     "arm64-osx"        "Info.plist"
     "x86_64-osx"       "Info.plist"
     "wasm-web"         "engine_template.html"

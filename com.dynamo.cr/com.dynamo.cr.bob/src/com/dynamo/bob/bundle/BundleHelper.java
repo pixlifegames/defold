@@ -329,7 +329,7 @@ public class BundleHelper {
             // At this stage, in case of a cloud build, we've written the main manifest down in the default name.
             String mainManifestName = getMainManifestName(platform);
 
-            File extenderPlatformDir = new File(project.getRootDirectory(), "build/"+platform.getExtenderPair());
+            File extenderPlatformDir = new File(project.getBinaryOutputDirectory(), platform.getExtenderPair());
             manifestFile = new File(extenderPlatformDir, mainManifestName); // the merged manifest
         }
         FileUtils.copyFile(manifestFile, targetManifest);

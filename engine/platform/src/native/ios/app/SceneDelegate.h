@@ -14,8 +14,10 @@
 
 #import <UIKit/UIKit.h>
 
+#if !TARGET_OS_TV
 FOUNDATION_EXPORT UIInterfaceOrientationMask dmNativeGetiOSDefaultInterfaceOrientations(NSDictionary* info, UIUserInterfaceIdiom idiom);
 FOUNDATION_EXPORT UIInterfaceOrientationMask dmNativeGetiOSSupportedInterfaceOrientations(UIWindow* window);
+#endif
 
 @interface DefoldSceneDelegate : NSObject <UIWindowSceneDelegate>
 {

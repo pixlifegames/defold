@@ -28,6 +28,7 @@ static int g_view_type = NATIVE_NO_API;
 
 @synthesize baseView;
 
+#if !TARGET_OS_TV
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {
     UIWindow* window = self.viewIfLoaded.window;
@@ -36,6 +37,7 @@ static int g_view_type = NATIVE_NO_API;
         window = g_ApplicationWindow;
     return dmNativeGetiOSSupportedInterfaceOrientations(window);
 }
+#endif
 
 - (void)dealloc
 {
@@ -109,6 +111,7 @@ static int g_view_type = NATIVE_NO_API;
     }];
 }
 
+#if !TARGET_OS_TV
 - (BOOL)shouldUpdateViewFrame
 {
     UIDevice *device = [UIDevice currentDevice];
@@ -190,6 +193,7 @@ static int g_view_type = NATIVE_NO_API;
     }
     return origin;
 }
+#endif
 
 - (void)viewDidAppear:(BOOL)animated
 {
@@ -198,9 +202,11 @@ static int g_view_type = NATIVE_NO_API;
     [super viewDidAppear: animated];
 }
 
+#if !TARGET_OS_TV
 - (UIRectEdge)preferredScreenEdgesDeferringSystemGestures {
     return UIRectEdgeAll;
 }
+#endif
 
 @end
 

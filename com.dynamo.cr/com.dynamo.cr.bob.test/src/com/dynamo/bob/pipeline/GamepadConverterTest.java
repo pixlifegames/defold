@@ -37,6 +37,8 @@ public class GamepadConverterTest extends AbstractProtoBuilderTest {
     public void testNormalizePlatform() throws Exception {
         assertEquals("ios", GamepadConverter.normalizePlatform("arm64-ios"));
         assertEquals("ios", GamepadConverter.normalizePlatform("arm64_sim-ios"));
+        assertEquals("ios", GamepadConverter.normalizePlatform("arm64-tvos"));
+        assertEquals("ios", GamepadConverter.normalizePlatform("arm64_sim-tvos"));
         assertEquals("macos", GamepadConverter.normalizePlatform("arm64-macos"));
         assertEquals("android", GamepadConverter.normalizePlatform("arm64-android"));
         assertEquals("web", GamepadConverter.normalizePlatform("wasm_pthread-web"));

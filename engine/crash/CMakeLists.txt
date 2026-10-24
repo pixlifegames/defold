@@ -67,7 +67,7 @@ elseif(NOT TARGET_PLATFORM MATCHES "^(arm64-nx64|x86_64-ps4|x86_64-ps5|x86_64-xb
   set(CRASH_FILE_SOURCE "${CRASH_SRC_DIR}/file_posix.cpp")
 endif()
 
-if(TARGET_PLATFORM MATCHES "macos|ios")
+if(TARGET_PLATFORM MATCHES "macos|ios|tvos")
   set(CRASH_LOAD_ADDRS_SOURCE "${CRASH_SRC_DIR}/load_addrs_mach.cpp")
   set(CRASH_SIGNAL_HANDLER_SOURCE "${CRASH_SRC_DIR}/backtrace_signal_posix.cpp")
   set(CRASH_SIGNAL_POLICY_SOURCE "${CRASH_SRC_DIR}/backtrace_signal_policy_darwin.cpp")

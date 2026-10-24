@@ -94,20 +94,12 @@ function package_xcode() {
 
     EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift/watchos ${EXTRA_ARGS}"
     EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift/watchsimulator ${EXTRA_ARGS}"
-    EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift/appletvos ${EXTRA_ARGS}"
-    EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift/appletvsimulator ${EXTRA_ARGS}"
     EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-5.0/watchos ${EXTRA_ARGS}"
     EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-5.0/watchsimulator ${EXTRA_ARGS}"
-    EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-5.0/appletvos ${EXTRA_ARGS}"
-    EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-5.0/appletvsimulator ${EXTRA_ARGS}"
     EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-5.5/watchos ${EXTRA_ARGS}"
     EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-5.5/watchsimulator ${EXTRA_ARGS}"
-    EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-5.5/appletvos ${EXTRA_ARGS}"
-    EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-5.5/appletvsimulator ${EXTRA_ARGS}"
     EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-6.2/watchos ${EXTRA_ARGS}"
     EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-6.2/watchsimulator ${EXTRA_ARGS}"
-    EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-6.2/appletvos ${EXTRA_ARGS}"
-    EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/swift-6.2/appletvsimulator ${EXTRA_ARGS}"
 
     EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/Developer/Platforms ${EXTRA_ARGS}"
     EXTRA_ARGS="--exclude=$inner_folder_name/Developer/Toolchains/${_name}/usr/lib/sourcekitd.framework ${EXTRA_ARGS}"
@@ -120,6 +112,8 @@ function package_xcode() {
 
 package_platform "iPhoneOS"
 package_platform "iPhoneSimulator"
+package_platform "AppleTVOS"
+package_platform "AppleTVSimulator"
 package_platform "MacOSX"
 
 package_xcode "XcodeDefault" "darwin"

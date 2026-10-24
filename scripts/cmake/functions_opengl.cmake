@@ -35,7 +35,7 @@ function(defold_target_link_opengl target platform)
         target_link_libraries(${target} ${DOGL_SCOPE}
             "-framework OpenGL")
 
-    elseif(_PLAT_OS STREQUAL "ios")
+    elseif(_PLAT_OS MATCHES "^(ios|tvos)$")
         # iOS uses OpenGLES
         target_link_libraries(${target} ${DOGL_SCOPE} "-framework OpenGLES")
 

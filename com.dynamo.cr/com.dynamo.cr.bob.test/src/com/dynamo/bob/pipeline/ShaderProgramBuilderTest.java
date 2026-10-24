@@ -620,6 +620,8 @@ public class ShaderProgramBuilderTest extends AbstractProtoBuilderTest {
             { Platform.Arm64Linux,     new ShaderDesc.Language[] { ShaderDesc.Language.LANGUAGE_GLES_SM300, ShaderDesc.Language.LANGUAGE_GLES_SM100 } },
             { Platform.Arm64Ios,       new ShaderDesc.Language[] { ShaderDesc.Language.LANGUAGE_GLES_SM300, ShaderDesc.Language.LANGUAGE_GLES_SM100 } },
             { Platform.Arm64IosSim,    new ShaderDesc.Language[] { ShaderDesc.Language.LANGUAGE_MSL_22 } },
+            { Platform.Arm64TvOS,      new ShaderDesc.Language[] { ShaderDesc.Language.LANGUAGE_MSL_22 } },
+            { Platform.Arm64TvOSSim,   new ShaderDesc.Language[] { ShaderDesc.Language.LANGUAGE_MSL_22 } },
             { Platform.Armv7Android,   new ShaderDesc.Language[] { ShaderDesc.Language.LANGUAGE_GLES_SM300, ShaderDesc.Language.LANGUAGE_GLES_SM100, ShaderDesc.Language.LANGUAGE_SPIRV } },
             { Platform.Arm64Android,   new ShaderDesc.Language[] { ShaderDesc.Language.LANGUAGE_GLES_SM300, ShaderDesc.Language.LANGUAGE_GLES_SM100, ShaderDesc.Language.LANGUAGE_SPIRV } },
             { Platform.WasmWeb,        new ShaderDesc.Language[] { ShaderDesc.Language.LANGUAGE_GLES_SM300, ShaderDesc.Language.LANGUAGE_GLES_SM100 } },
@@ -691,6 +693,21 @@ public class ShaderProgramBuilderTest extends AbstractProtoBuilderTest {
         checkOnlyExpectedLanguages(
             compileShaderForPlatform(Platform.Arm64IosSim, "opengles,vulkan", "simulator_metal"),
             ShaderDesc.Language.LANGUAGE_MSL_22);
+    }
+
+    // Verifies that tvOS builds Metal shaders only, whatever an app manifest asks for: the tvOS engine has no other
+    // graphics backend.
+    @Test
+    public void testTvOSAlwaysUsesMetal() throws Exception {
+        for (Platform platform : new Platform[] { Platform.Arm64TvOS, Platform.Arm64TvOSSim }) {
+            String adapters = Project.getShaderAdaptersOption(platform, List.of(
+                platformSettings("symbols", List.of("GraphicsAdapterOpenGLES", "GraphicsAdapterVulkan"),
+                                 "excludeSymbols", List.of("GraphicsAdapterMetal"))));
+            assertEquals("metal", adapters);
+            checkOnlyExpectedLanguages(
+                compileShaderForPlatform(platform, "opengles,vulkan", "tvos_metal_" + platform.getArch()),
+                ShaderDesc.Language.LANGUAGE_MSL_22);
+        }
     }
 
     @Test

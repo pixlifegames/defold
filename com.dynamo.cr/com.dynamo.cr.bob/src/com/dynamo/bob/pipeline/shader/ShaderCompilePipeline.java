@@ -325,7 +325,8 @@ public class ShaderCompilePipeline {
         opts.glslEsDefaultFloatPrecision   = this.options.glslEsDefaultFloatPrecision;
         opts.glslEsDefaultIntPrecision     = this.options.glslEsDefaultIntPrecision;
         if (this.options.targetPlatform != null) {
-            if (this.options.targetPlatform.matchesOS(OS.OS_ID_IOS)) {
+            // tvOS has the iOS family of Metal GPUs
+            if (this.options.targetPlatform.matchesOS(OS.OS_ID_IOS) || this.options.targetPlatform.matchesOS(OS.OS_ID_TVOS)) {
                 opts.targetPlatform = Shaderc.ShaderCompilerPlatform.SHADER_COMPILER_PLATFORM_IOS;
             } else if (this.options.targetPlatform.isMacOS()) {
                 opts.targetPlatform = Shaderc.ShaderCompilerPlatform.SHADER_COMPILER_PLATFORM_MACOS;

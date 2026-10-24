@@ -11,10 +11,20 @@ set(_DEFOLD_TARGET_ARCH "arm64")
 # Ensure CMake uses the target arch (overrides host default when needed)
 set(CMAKE_OSX_ARCHITECTURES "${_DEFOLD_TARGET_ARCH}" CACHE STRING "Defold target arch" FORCE)
 
+# tvOS builds as iOS (DM_PLATFORM_IOS) and also defines DM_PLATFORM_TVOS
+set(_DEFOLD_IS_TVOS OFF)
+if(TARGET_PLATFORM MATCHES "-tvos$")
+  set(_DEFOLD_IS_TVOS ON)
+endif()
+
 # Minimum iOS version: prefer CMAKE_OSX_DEPLOYMENT_TARGET if set
 set(_DEFOLD_IPHONEOS_MIN "${CMAKE_OSX_DEPLOYMENT_TARGET}")
 if(NOT _DEFOLD_IPHONEOS_MIN)
-  set(_DEFOLD_IPHONEOS_MIN ${SDK_VERSION_IPHONEOS_MIN})
+  if(_DEFOLD_IS_TVOS)
+    set(_DEFOLD_IPHONEOS_MIN ${SDK_VERSION_TVOS_MIN})
+  else()
+    set(_DEFOLD_IPHONEOS_MIN ${SDK_VERSION_IPHONEOS_MIN})
+  endif()
 endif()
 
 # Compile definitions (mirrors waf_dynamo iOS defaults)
@@ -23,7 +33,22 @@ target_compile_definitions(defold_sdk INTERFACE
   DM_NO_SYSTEM_FUNCTION
   DM_HOSTFS=\"\")
 
-if(TARGET_PLATFORM STREQUAL "arm64_sim-ios")
+if(_DEFOLD_IS_TVOS)
+  target_compile_definitions(defold_sdk INTERFACE DM_PLATFORM_TVOS)
+endif()
+
+if(TARGET_PLATFORM STREQUAL "arm64_sim-tvos")
+  target_compile_definitions(defold_sdk INTERFACE DM_PLATFORM_IOS_SIMULATOR IOS_SIMULATOR DM_PLATFORM_TVOS_SIMULATOR)
+  if(DEFINED _DEFOLD_IOS_SYSROOT AND NOT _DEFOLD_IOS_SYSROOT MATCHES ".*AppleTVSimulator.*\.sdk/?$")
+    message(FATAL_ERROR "TARGET_PLATFORM=arm64_sim-tvos requires AppleTVSimulator SDK; found: ${_DEFOLD_IOS_SYSROOT}")
+  endif()
+  set(_DEFOLD_IOS_VERSION_MIN_FLAG "-mtvos-simulator-version-min=${_DEFOLD_IPHONEOS_MIN}")
+elseif(TARGET_PLATFORM STREQUAL "arm64-tvos")
+  if(DEFINED _DEFOLD_IOS_SYSROOT AND NOT _DEFOLD_IOS_SYSROOT MATCHES ".*AppleTVOS.*\.sdk/?$")
+    message(FATAL_ERROR "TARGET_PLATFORM=arm64-tvos requires AppleTVOS SDK; found: ${_DEFOLD_IOS_SYSROOT}")
+  endif()
+  set(_DEFOLD_IOS_VERSION_MIN_FLAG "-mtvos-version-min=${_DEFOLD_IPHONEOS_MIN}")
+elseif(TARGET_PLATFORM STREQUAL "arm64_sim-ios")
   target_compile_definitions(defold_sdk INTERFACE DM_PLATFORM_IOS_SIMULATOR IOS_SIMULATOR)
   # Guard: Simulator builds must use an iPhoneSimulator SDK
   if(DEFINED _DEFOLD_IOS_SYSROOT AND NOT _DEFOLD_IOS_SYSROOT MATCHES ".*iPhoneSimulator.*\.sdk/?$")

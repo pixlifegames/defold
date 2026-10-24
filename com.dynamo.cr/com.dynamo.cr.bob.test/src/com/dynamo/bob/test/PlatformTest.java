@@ -14,6 +14,7 @@
 
 package com.dynamo.bob.test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
@@ -42,6 +43,8 @@ public class PlatformTest {
         testPlatformGet(Platform.Arm64MacOS);
         testPlatformGet(Platform.Arm64IosSim);
         testPlatformGet(Platform.Arm64Ios);
+        testPlatformGet(Platform.Arm64TvOSSim);
+        testPlatformGet(Platform.Arm64TvOS);
         testPlatformGet(Platform.X86_64Linux);
         testPlatformGet(Platform.Arm64Linux);
         testPlatformGet(Platform.Armv7Android);
@@ -59,6 +62,9 @@ public class PlatformTest {
 
         assertSame(PlatformProfile.OS.OS_ID_IOS, Platform.get("arm64-ios").getOsID());
         assertSame(PlatformProfile.OS.OS_ID_IOS, Platform.get("arm64_sim-ios").getOsID());
+
+        assertSame(PlatformProfile.OS.OS_ID_TVOS, Platform.get("arm64-tvos").getOsID());
+        assertSame(PlatformProfile.OS.OS_ID_TVOS, Platform.get("arm64_sim-tvos").getOsID());
 
         assertSame(PlatformProfile.OS.OS_ID_ANDROID, Platform.get("armv7-android").getOsID());
         assertSame(PlatformProfile.OS.OS_ID_ANDROID, Platform.get("arm64-android").getOsID());
@@ -102,6 +108,10 @@ public class PlatformTest {
 
         assertTrue(Platform.Arm64Ios.matchesOS(PlatformProfile.OS.OS_ID_IOS));
         assertTrue(Platform.Arm64IosSim.matchesOS(PlatformProfile.OS.OS_ID_IOS));
+
+        assertTrue(Platform.Arm64TvOS.matchesOS(PlatformProfile.OS.OS_ID_TVOS));
+        assertTrue(Platform.Arm64TvOSSim.matchesOS(PlatformProfile.OS.OS_ID_TVOS));
+        assertFalse(Platform.Arm64TvOS.matchesOS(PlatformProfile.OS.OS_ID_IOS));
 
         assertTrue(Platform.Arm64Linux.matchesOS(PlatformProfile.OS.OS_ID_LINUX));
         assertTrue(Platform.X86_64Linux.matchesOS(PlatformProfile.OS.OS_ID_LINUX));
